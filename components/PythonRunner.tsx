@@ -35,6 +35,15 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
   const plotRootRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Animation Management
+  const rafIds = useRef<Set<number>>(new Set());
+  const setOutputRef = useRef(setOutput); // Ref to access latest setOutput in callbacks
+
+  // Update ref when state changes
+  useEffect(() => {
+    setOutputRef.current = setOutput;
+  }, [setOutput]);
+
   // Sync prop code to local state when it changes (new generation)
   useEffect(() => {
     setScriptContent(initialCode);
@@ -63,6 +72,47 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
         console.warn("Failed to fetch package list", e);
     }
   };
+
+  // Cleanup Animations Helper
+  const cleanupAnimations = () => {
+      rafIds.current.forEach(id => window.cancelAnimationFrame(id));
+      rafIds.current.clear();
+  };
+
+  // Intercept requestAnimationFrame for cleanup and error handling
+  useEffect(() => {
+    const originalRAF = window.requestAnimationFrame;
+    const originalCAF = window.cancelAnimationFrame;
+
+    window.requestAnimationFrame = (callback) => {
+        const wrappedCallback = (time: number) => {
+            try {
+                callback(time);
+            } catch (e: any) {
+                console.error("Animation Loop Error:", e);
+                // Attempt to log to console output
+                if (setOutputRef.current) {
+                    setOutputRef.current(prev => [...prev, { type: 'err', content: `Animation Error: ${e.message || e}` }]);
+                }
+            }
+        };
+
+        const id = originalRAF(wrappedCallback);
+        rafIds.current.add(id);
+        return id;
+    };
+
+    window.cancelAnimationFrame = (id) => {
+        rafIds.current.delete(id);
+        originalCAF(id);
+    };
+
+    return () => {
+        cleanupAnimations();
+        window.requestAnimationFrame = originalRAF;
+        window.cancelAnimationFrame = originalCAF;
+    };
+  }, []);
 
   // Load Pyodide and Packages
   useEffect(() => {
@@ -135,6 +185,9 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
       return;
     }
 
+    // CLEANUP PREVIOUS ANIMATIONS
+    cleanupAnimations();
+
     setIsRunning(true);
     setOutput([]); // Clear previous output
     setShowEditor(false); // Switch to visual output on run
@@ -205,6 +258,7 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
 
   const handleReloadEnvironment = () => {
     if (confirm("This will reload the page to reset the Python environment. All current data and history in this session will be lost. Continue?")) {
+        cleanupAnimations();
         window.location.reload();
     }
   };
@@ -233,9 +287,14 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Check if last output was error to show fix button
+  // Enhanced Error Handling
+  // Check if the last output was an error
   const hasError = output.length > 0 && output[output.length - 1].type === 'err';
-  const lastErrorMsg = hasError ? output[output.length - 1].content : '';
+  
+  // Aggregate all error messages to provide full traceback context
+  const errorContext = hasError 
+    ? output.filter(line => line.type === 'err').map(line => line.content).join('\n')
+    : '';
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] text-zinc-300 font-mono text-sm overflow-hidden relative">
@@ -503,11 +562,11 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
             {hasError && onFixError && (
               <div className="sticky bottom-0 right-0 p-2 flex justify-end bg-gradient-to-t from-[#1e1e1e] to-transparent">
                  <button 
-                  onClick={() => onFixError(scriptContent, lastErrorMsg)}
+                  onClick={() => onFixError(scriptContent, errorContext)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs rounded shadow-lg transition-colors animate-in fade-in slide-in-from-bottom-2"
                  >
                    <Sparkles className="w-3 h-3" />
-                   Fix with AI
+                   Fix Error with AI
                  </button>
               </div>
             )}
