@@ -54,21 +54,23 @@ const App: React.FC = () => {
     return !trimmed.startsWith('<!DOCTYPE') && !trimmed.startsWith('<html');
   };
 
-  const handleGenerate = useCallback(async () => {
-    if (!prompt.trim() && files.length === 0) return;
+  const handleGenerate = useCallback(async (overridePrompt?: string, overrideCode?: string) => {
+    const promptToUse = overridePrompt || prompt;
+    // Use files from state, unless they were just cleared, but for now we use state files
+    
+    if (!promptToUse.trim() && files.length === 0) return;
 
     setLoading(true);
     setError(null);
     try {
-      // If we have a current result, pass its code as context for the update
-      // This allows the user to say "make the button blue" and have it apply to the existing UI
-      const previousCode = result ? result.code : undefined;
+      // If we have an override code (from Python Editor) use that, otherwise use current result code
+      const previousCode = overrideCode || (result ? result.code : undefined);
       
-      const data = await generateUI(prompt, files, previousCode);
+      const data = await generateUI(promptToUse, files, previousCode);
       
       const newHistoryItem: HistoryItem = {
         id: Date.now().toString(),
-        prompt: prompt || (files.length > 0 ? 'File Analysis' : 'Generated UI'),
+        prompt: promptToUse || (files.length > 0 ? 'File Analysis' : 'Generated UI'),
         files: [...files], // Save a copy of the files
         result: data,
         timestamp: Date.now(),
@@ -95,6 +97,13 @@ const App: React.FC = () => {
       setLoading(false);
     }
   }, [prompt, files, result]);
+
+  const handleFixPythonError = useCallback((currentCode: string, errorMsg: string) => {
+      const fixPrompt = `Fix the following Python error. Ensure the code is correct and runnable:\n\n${errorMsg}`;
+      // Update UI to show we are fixing
+      setPrompt(fixPrompt); 
+      handleGenerate(fixPrompt, currentCode);
+  }, [handleGenerate]);
 
   const handleSelectHistory = (item: HistoryItem) => {
     setResult(item.result);
@@ -218,7 +227,7 @@ const App: React.FC = () => {
                   </div>
 
                   <button 
-                    onClick={handleGenerate}
+                    onClick={() => handleGenerate()}
                     className="mt-6 w-full py-2.5 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-200 rounded-lg text-sm font-medium transition-colors border border-red-200 dark:border-red-800/30 flex items-center justify-center gap-2"
                   >
                     <RefreshCcw className="w-4 h-4" />
@@ -307,7 +316,10 @@ const App: React.FC = () => {
                      <CodePreview html={result.code} />
                   )}
                   {viewMode === 'python' && isCurrentResultPython && (
-                     <PythonRunner code={result.code} />
+                     <PythonRunner 
+                       code={result.code} 
+                       onFixError={handleFixPythonError} 
+                     />
                   )}
                   {viewMode === 'code' && (
                     <CodeViewer code={result.code} />
@@ -325,7 +337,7 @@ const App: React.FC = () => {
                       setPrompt={setPrompt} 
                       files={files}
                       setFiles={setFiles}
-                      onGenerate={handleGenerate} 
+                      onGenerate={() => handleGenerate()} 
                       loading={loading}
                   />
               </div>

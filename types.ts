@@ -35,6 +35,11 @@ export interface CodeViewerProps {
   code: string;
 }
 
+export interface PythonRunnerProps {
+  code: string;
+  onFixError?: (code: string, error: string) => void;
+}
+
 export interface HistorySidebarProps {
   history: HistoryItem[];
   onSelect: (item: HistoryItem) => void;
