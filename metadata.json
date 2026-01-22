@@ -1,0 +1,5 @@
+{
+  "name": "NeoForge UI",
+  "description": "An AI-powered interface generator that creates modern, single-file HTML/CSS/JS UI components on demand.",
+  "requestFramePermissions": []
+}

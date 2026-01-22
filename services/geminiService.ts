@@ -1,0 +1,182 @@
+import { GoogleGenAI } from "@google/genai";
+import { GeneratedUI, UploadedFile } from "../types";
+
+const SYSTEM_INSTRUCTION = `You are a Code Generator. You do not respond with conversational text. You respond ONLY with a JSON object containing two fields:
+
+explanation: A one-sentence summary of what you built.
+
+code: The code content.
+
+MODE 1: PYTHON REQUESTS
+If the user specifically asks for "Python", "script", "math calculation", "numpy", or "data processing":
+- Generate PURE PYTHON code.
+- Do NOT use markdown code blocks.
+- Ensure the code prints output to stdout so it is visible.
+
+MODE 2: REACT / 3D / COMPONENT REQUESTS
+If the user asks for a "React Component", "Visualizer", "Three.js", "React Three Fiber", or "R3F":
+- You MUST generate a self-contained HTML file that runs the React code immediately using Babel Standalone.
+- Use the exact template structure below (adjusting imports as needed, but keeping the setup):
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "three": "https://esm.sh/three@0.160.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #111; color: white; }
+  </style>
+</head>
+<body>
+  <div id="root" class="w-screen h-screen"></div>
+  <script type="text/babel" data-type="module">
+    import React, { useState, useEffect, useRef, useMemo } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import * as THREE from 'three';
+    import { Canvas, useFrame, useThree } from '@react-three/fiber';
+    import { OrbitControls, Text, Html, PerspectiveCamera } from '@react-three/drei';
+    import { ArrowRight } from 'lucide-react';
+
+    // --- GENERATED COMPONENT START ---
+    // (Insert the requested component here, e.g., Visualizer3D)
+    
+    // --- APP WRAPPER ---
+    const App = () => {
+      // (If the component needs data, generate mock data here)
+      // e.g. const data = useMemo(() => [...], []);
+      
+      return (
+        <div className="w-full h-full">
+           {/* Render the component here */}
+        </div>
+      );
+    };
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
+
+MODE 3: STANDARD HTML UI (Default)
+For all other requests (landing pages, forms, dashboards):
+- Generate a single HTML string with embedded CSS (Tailwind) and JS.
+- Use <script src="https://cdn.tailwindcss.com"></script>.
+- Use 'https://placehold.co/{width}x{height}' for images.
+- Use SVG icons directly.
+
+VISION INSTRUCTIONS:
+- Analyze images for UI structure or data patterns.
+- If data is detected and Python is not requested, generate a UI that visualizes that data.
+
+CRITICAL:
+- Return ONLY valid JSON.
+- Do NOT add conversational text before or after the JSON.
+- If using real-world data from search, integrate it directly into the generated code.
+`;
+
+export const generateUI = async (prompt: string, files: UploadedFile[] = [], previousCode?: string): Promise<GeneratedUI> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing. Please check your environment configuration.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  // 'gemini-3-flash-preview' supports multimodal inputs and tools
+  const model = 'gemini-3-flash-preview';
+
+  try {
+    const parts: any[] = [];
+
+    // Add files if present
+    files.forEach(file => {
+      parts.push({
+        inlineData: {
+          mimeType: file.mimeType,
+          data: file.data
+        }
+      });
+    });
+
+    // Handle prompt construction with previous code context
+    let promptText = prompt.trim();
+    
+    if (previousCode) {
+      promptText = `Here is the current code you generated previously:\n\n${previousCode}\n\nUPDATE INSTRUCTION: ${promptText || "Improve this based on the context."}\n\nApply these changes. Return the full, updated code.`;
+    } else if (!promptText && files.length > 0) {
+      promptText = "Analyze this file/image and generate a UI based on it. If it looks like a dashboard, create a dashboard. If it looks like a form, create a form.";
+    }
+
+    parts.push({ text: promptText });
+
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: {
+        role: 'user',
+        parts: parts
+      },
+      config: {
+        systemInstruction: SYSTEM_INSTRUCTION,
+        tools: [{googleSearch: {}}],
+        // responseMimeType: 'application/json' // Disabled to allow googleSearch tool usage
+      }
+    });
+
+    let responseText = response.text;
+    
+    if (!responseText) {
+      throw new Error("No response received from the model.");
+    }
+
+    // Clean Markdown wrapper if present (often happens even if not requested)
+    if (responseText.includes("```json")) {
+      responseText = responseText.split("```json")[1].split("```")[0];
+    } else if (responseText.includes("```")) {
+      responseText = responseText.split("```")[1].split("```")[0];
+    }
+
+    let parsed;
+    try {
+        parsed = JSON.parse(responseText.trim());
+    } catch (e) {
+        console.error("JSON Parsing failed", e, responseText);
+        throw new Error("Failed to parse JSON response from Gemini. The model might have returned unstructured text.");
+    }
+    
+    // Extract grounding chunks if available
+    const sourcesMap = new Map<string, string>();
+    if (response.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+      response.candidates[0].groundingMetadata.groundingChunks.forEach((chunk: any) => {
+        if (chunk.web?.uri && chunk.web?.title) {
+          sourcesMap.set(chunk.web.uri, chunk.web.title);
+        }
+      });
+    }
+
+    const sources = Array.from(sourcesMap.entries()).map(([uri, title]) => ({ uri, title }));
+
+    return {
+      explanation: parsed.explanation || "Generated UI",
+      code: parsed.code || "// No code generated",
+      sources: sources.length > 0 ? sources : undefined
+    };
+
+  } catch (error: any) {
+    console.error("Gemini Generation Error:", error);
+    throw new Error(error.message || "Failed to generate UI");
+  }
+};
