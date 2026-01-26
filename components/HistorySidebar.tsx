@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { History, ChevronLeft, ChevronRight, MessageSquare, Clock, Paperclip, Trash2, X, Check, Plus, Search, FileText, Image as ImageIcon } from 'lucide-react';
+import { History, ChevronLeft, ChevronRight, MessageSquare, Clock, Paperclip, Trash2, X, Check, Plus, Search, FileText, Image as ImageIcon, Rocket, Smartphone } from 'lucide-react';
 import { HistorySidebarProps } from '../types';
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({ 
@@ -13,11 +13,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'history' | 'apps'>('history');
 
-  const filteredHistory = history.filter(item => 
-    item.prompt.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.result.explanation.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history.filter(item => {
+    const matchesSearch = item.prompt.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          item.result.explanation.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMode = viewMode === 'history' ? true : item.isPublished;
+    return matchesSearch && matchesMode;
+  });
 
   if (!isOpen) {
     return (
@@ -25,7 +28,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         <button
           onClick={() => setIsOpen(true)}
           className="bg-white dark:bg-zinc-900 border border-l-0 border-zinc-200 dark:border-zinc-800 p-2 rounded-r-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white shadow-lg transition-colors"
-          title="Show History"
+          title="Show Sidebar"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -37,8 +40,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     <div className="w-64 bg-background border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-full absolute md:relative z-20 shadow-2xl md:shadow-none transition-all duration-300">
       <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50/50 dark:bg-zinc-900/50">
         <div className="flex items-center space-x-2 text-zinc-700 dark:text-zinc-200 font-medium">
-          <History className="w-4 h-4" />
-          <span>History</span>
+          {viewMode === 'apps' ? <Rocket className="w-4 h-4 text-blue-500" /> : <History className="w-4 h-4" />}
+          <span>{viewMode === 'apps' ? 'My Apps' : 'History'}</span>
         </div>
         <button
           onClick={() => setIsOpen(false)}
@@ -48,7 +51,33 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </button>
       </div>
 
-      <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/50 space-y-2">
+      <div className="p-3 border-b border-zinc-100 dark:border-zinc-800/50 space-y-3">
+        {/* Toggle between Chats and Apps */}
+        <div className="flex p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg">
+          <button
+            onClick={() => setViewMode('history')}
+            className={`flex-1 flex items-center justify-center space-x-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+              viewMode === 'history' 
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' 
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Chats</span>
+          </button>
+          <button
+            onClick={() => setViewMode('apps')}
+            className={`flex-1 flex items-center justify-center space-x-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+              viewMode === 'apps' 
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' 
+                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+            }`}
+          >
+            <Rocket className="w-3.5 h-3.5" />
+            <span>Apps</span>
+          </button>
+        </div>
+
         <button 
           onClick={onNewChat}
           className="w-full flex items-center justify-center space-x-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors shadow-sm"
@@ -62,7 +91,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input 
             type="text"
-            placeholder="Search history..."
+            placeholder={viewMode === 'apps' ? "Search apps..." : "Search history..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-3 py-1.5 text-sm bg-zinc-100 dark:bg-zinc-800/50 border border-transparent focus:bg-white dark:focus:bg-zinc-800 focus:border-zinc-200 dark:focus:border-zinc-700 rounded-md outline-none text-zinc-900 dark:text-zinc-200 placeholder-zinc-500 transition-all"
@@ -73,14 +102,22 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
         {filteredHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center px-4">
-            {searchTerm ? (
-               <Search className="w-8 h-8 text-zinc-300 dark:text-zinc-800 mb-2" />
+            {viewMode === 'apps' ? (
+                <>
+                  <Rocket className="w-8 h-8 text-zinc-300 dark:text-zinc-800 mb-2" />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-600">
+                    {searchTerm ? "No apps found." : "No apps published yet."}
+                  </p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Publish results to see them here.</p>
+                </>
             ) : (
-               <Clock className="w-8 h-8 text-zinc-300 dark:text-zinc-800 mb-2" />
+                <>
+                  <Clock className="w-8 h-8 text-zinc-300 dark:text-zinc-800 mb-2" />
+                  <p className="text-xs text-zinc-500 dark:text-zinc-600">
+                    {searchTerm ? "No results found." : "No history yet."}
+                  </p>
+                </>
             )}
-            <p className="text-xs text-zinc-500 dark:text-zinc-600">
-              {searchTerm ? "No results found." : "No history yet."}
-            </p>
           </div>
         ) : (
           filteredHistory.slice().reverse().map((item) => (
@@ -115,27 +152,37 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         >
                         <div className="flex items-start space-x-2 pr-6">
                             <div className="mt-1 flex-shrink-0">
-                            {item.files && item.files.length > 0 ? (
+                            {item.isPublished ? (
+                                <Smartphone className={`w-3 h-3 ${
+                                    currentId === item.id ? 'text-blue-500' : 'text-purple-400 dark:text-purple-500'
+                                 }`} />
+                            ) : item.files && item.files.length > 0 ? (
                                 <div className={`flex -space-x-1`}>
-                                   {/* If mostly images, show image icon. If pdf/text, show file icon */}
                                    {item.files[0].mimeType.startsWith('image/') ? (
                                      <ImageIcon className={`w-3 h-3 ${
-                                        currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-500'
+                                        currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600'
                                      }`} />
                                    ) : (
                                      <FileText className={`w-3 h-3 ${
-                                        currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-500'
+                                        currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600'
                                      }`} />
                                    )}
                                 </div>
                             ) : (
                                 <MessageSquare className={`w-3 h-3 ${
-                                currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600 group-hover:text-zinc-600 dark:group-hover:text-zinc-500'
+                                currentId === item.id ? 'text-blue-500' : 'text-zinc-400 dark:text-zinc-600'
                                 }`} />
                             )}
                             </div>
                             <div className="flex-1 min-w-0">
-                            <p className="truncate font-medium">{item.explanation}</p>
+                            <div className="flex items-center gap-1.5">
+                                <p className={`truncate font-medium ${item.isPublished ? 'text-purple-600 dark:text-purple-400' : ''}`}>
+                                    {item.result.explanation}
+                                </p>
+                                {item.isPublished && (
+                                    <span className="shrink-0 text-[9px] uppercase tracking-wider font-bold text-purple-500 border border-purple-200 dark:border-purple-800 px-1 rounded">App</span>
+                                )}
+                            </div>
                             <div className="flex items-center justify-between mt-0.5">
                                 <p className="truncate text-xs text-zinc-500 dark:text-zinc-600 opacity-80 max-w-[80%]">
                                 {item.prompt}

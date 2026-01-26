@@ -1,13 +1,168 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Play, RotateCcw, Terminal, Loader2, Download, Copy, Check, X, Upload, FileCode, Eye, Sparkles, Package, Search, Trash2, RefreshCw } from 'lucide-react';
+import { Play, RotateCcw, Terminal, Loader2, Download, Copy, Check, X, Upload, FileCode, Eye, Sparkles, Package, Search, Trash2, RefreshCw, BookOpen, Image as ImageIcon, Box } from 'lucide-react';
 import { PythonRunnerProps } from '../types';
 
 declare global {
   interface Window {
     loadPyodide: any;
     pyodide: any;
+    Plotly: any;
+    renderPlotly: (json: string) => void;
+    THREE: any;
   }
 }
+
+const EXAMPLE_CHART_CODE = `import matplotlib.pyplot as plt
+import numpy as np
+
+# 1. Generate Data
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+
+# 2. Create Plot
+plt.figure(figsize=(10, 6))
+plt.plot(x, y, label='Sine Wave', color='#3b82f6', linewidth=2)
+
+# 3. Style
+plt.title('Simple Sine Wave', fontsize=14)
+plt.xlabel('X Axis')
+plt.ylabel('Y Axis')
+plt.grid(True, alpha=0.3)
+plt.legend()
+
+# 4. Render
+print("Rendering plot...")
+plt.show()`;
+
+const LORENZ_3D_CODE = `import numpy as np
+from js import window, document, THREE, Math
+from pyodide.ffi import create_proxy
+
+# 1. Setup Scene
+root = document.getElementById("plot-root")
+root.innerHTML = ""
+
+width = root.clientWidth
+height = 600
+
+scene = THREE.Scene.new()
+camera = THREE.PerspectiveCamera.new(50, width / height, 0.1, 1000)
+camera.position.set(0, 0, 60)
+
+renderer = THREE.WebGLRenderer.new({"antialias": True, "alpha": True})
+renderer.setSize(width, height)
+renderer.setClearColor(0x000000, 0)
+root.appendChild(renderer.domElement)
+
+# 2. Geometry
+max_points = 5000
+# We need to copy it or keep it synced. Simplest for pyodide: create JS typed array and update it.
+js_positions = window.Float32Array.new(max_points * 3)
+
+geometry = THREE.BufferGeometry.new()
+att = THREE.BufferAttribute.new(js_positions, 3)
+att.setUsage(THREE.DynamicDrawUsage)
+geometry.setAttribute('position', att)
+
+material = THREE.LineBasicMaterial.new({"color": 0x3b82f6, "linewidth": 2})
+line = THREE.Line.new(geometry, material)
+scene.add(line)
+
+# 3. State & Lorenz Equation
+params = {"sigma": 10.0, "rho": 28.0, "beta": 8.0/3.0}
+state = {"x": 0.1, "y": 0.0, "z": 0.0, "count": 0}
+
+def update(t):
+    dt = 0.01
+    x, y, z = state["x"], state["y"], state["z"]
+    
+    # Generate points faster than framerate
+    for _ in range(5):
+        if state["count"] >= max_points:
+            # Shift buffer logic is complex in simple script, let's just stop or loop
+            # For this demo, we'll just stop drawing new points to keep it simple
+            break
+            
+        dx = params["sigma"] * (y - x) * dt
+        dy = x * (params["rho"] - z) - y * dt
+        dz = x * y - params["beta"] * z * dt
+        
+        x += dx
+        y += dy
+        z += dz
+        
+        idx = state["count"]
+        js_positions[idx * 3] = x
+        js_positions[idx * 3 + 1] = y
+        js_positions[idx * 3 + 2] = z
+        state["count"] += 1
+
+    state["x"], state["y"], state["z"] = x, y, z
+    
+    # Update Three.js buffer
+    line.geometry.attributes.position.needsUpdate = True
+    if state["count"] < max_points:
+        line.geometry.setDrawRange(0, state["count"])
+    
+    # Auto rotate
+    line.rotation.y += 0.005
+    line.rotation.z += 0.001
+    
+    renderer.render(scene, camera)
+    window.requestAnimationFrame(proxy_update)
+
+proxy_update = create_proxy(update)
+window.requestAnimationFrame(proxy_update)
+
+# 4. Add HTML Sliders
+controls_div = document.createElement("div")
+controls_div.style.position = "absolute"
+controls_div.style.top = "10px"
+controls_div.style.left = "10px"
+controls_div.style.background = "rgba(0,0,0,0.8)"
+controls_div.style.padding = "10px"
+controls_div.style.borderRadius = "8px"
+controls_div.style.color = "white"
+controls_div.style.fontFamily = "monospace"
+controls_div.style.fontSize = "12px"
+root.appendChild(controls_div)
+
+def add_slider(label, key, min_val, max_val):
+    container = document.createElement("div")
+    container.style.marginBottom = "5px"
+    
+    lbl = document.createElement("div")
+    lbl.innerText = f"{label}: {params[key]:.1f}"
+    
+    inp = document.createElement("input")
+    inp.type = "range"
+    inp.min = str(min_val)
+    inp.max = str(max_val)
+    inp.step = "0.1"
+    inp.value = str(params[key])
+    
+    def on_change(e):
+        val = float(e.target.value)
+        params[key] = val
+        lbl.innerText = f"{label}: {val:.1f}"
+        
+        # Reset trace on param change for fun
+        state["x"], state["y"], state["z"] = 0.1, 0.0, 0.0
+        state["count"] = 0
+        line.geometry.setDrawRange(0, 0)
+        
+    proxy_change = create_proxy(on_change)
+    inp.addEventListener("input", proxy_change)
+    
+    container.appendChild(lbl)
+    container.appendChild(inp)
+    controls_div.appendChild(container)
+
+add_slider("Sigma", "sigma", 0, 50)
+add_slider("Rho", "rho", 0, 50)
+add_slider("Beta", "beta", 0, 10)
+
+print("Running Lorenz Attractor 3D simulation...")`;
 
 export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, onFixError }) => {
   const [output, setOutput] = useState<Array<{ type: 'out' | 'err'; content: string }>>([]);
@@ -25,10 +180,12 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
   const [pkgSearch, setPkgSearch] = useState('');
   const [installedPkgs, setInstalledPkgs] = useState<string[]>([]);
   const [isInstallingPkg, setIsInstallingPkg] = useState(false);
+  const [isRefreshingPkgs, setIsRefreshingPkgs] = useState(false);
 
   // Download state
-  const [isNaming, setIsNaming] = useState(false);
-  const [fileName, setFileName] = useState('script.py');
+  const [namingTarget, setNamingTarget] = useState<'script' | 'plot' | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [plotFormat, setPlotFormat] = useState<'png' | 'jpg' | 'svg' | 'pdf'>('png');
   
   const pyodideRef = useRef<any>(null);
   const outputEndRef = useRef<HTMLDivElement>(null);
@@ -57,6 +214,7 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
   // Helper to fetch installed packages
   const updatePackageList = async () => {
     if (!pyodideRef.current) return;
+    setIsRefreshingPkgs(true);
     try {
         // Run python to get list of packages from micropip
         const listJson = await pyodideRef.current.runPythonAsync(`
@@ -70,6 +228,8 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
         setInstalledPkgs(pkgs.sort());
     } catch (e) {
         console.warn("Failed to fetch package list", e);
+    } finally {
+        setIsRefreshingPkgs(false);
     }
   };
 
@@ -128,6 +288,22 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
             script.onload = resolve;
           });
         }
+        
+        // Load Plotly.js
+        if (!window.Plotly) {
+            const plotlyScript = document.createElement('script');
+            plotlyScript.src = 'https://cdn.plot.ly/plotly-2.27.0.min.js';
+            plotlyScript.async = true;
+            document.head.appendChild(plotlyScript);
+        }
+
+        // Load Three.js
+        if (!window.THREE) {
+            const threeScript = document.createElement('script');
+            threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js';
+            threeScript.async = true;
+            document.head.appendChild(threeScript);
+        }
 
         if (!pyodideRef.current) {
           const pyodide = await window.loadPyodide({
@@ -171,6 +347,18 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleLoadExample = () => {
+    setScriptContent(EXAMPLE_CHART_CODE);
+    setShowEditor(true);
+    setOutput(prev => [...prev, { type: 'out', content: 'Loaded example chart script.' }]);
+  };
+
+  const handleLoad3DExample = () => {
+    setScriptContent(LORENZ_3D_CODE);
+    setShowEditor(true);
+    setOutput(prev => [...prev, { type: 'out', content: 'Loaded 3D Lorenz Attractor example.' }]);
+  };
+
   const runCode = async () => {
     if (!pyodideRef.current || isRunning) return;
 
@@ -198,14 +386,52 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
         plotRootRef.current.innerHTML = '';
     }
 
+    // Setup Render Plotly Callback
+    window.renderPlotly = (jsonStr: string) => {
+      if (!plotRootRef.current) return;
+      if (!window.Plotly) {
+          setOutput(prev => [...prev, { type: 'err', content: 'Error: Plotly.js library not loaded yet.' }]);
+          return;
+      }
+      try {
+          const figure = JSON.parse(jsonStr);
+          const div = document.createElement('div');
+          div.style.width = '100%';
+          div.style.height = '500px';
+          div.className = "plotly-container mb-4 rounded-lg shadow-sm overflow-hidden bg-white";
+          plotRootRef.current.appendChild(div);
+
+          window.Plotly.newPlot(div, figure.data, figure.layout, { responsive: true });
+      } catch (e) {
+          console.error("Plotly render error", e);
+          setOutput(prev => [...prev, { type: 'err', content: 'Failed to render Plotly chart.' }]);
+      }
+    };
+
     try {
       const pyodide = pyodideRef.current;
       
-      // Auto-install packages detected in the code
+      // Check for Plotly import and ensure installed
+      if (scriptContent.includes('plotly')) {
+          const isPlotlyInstalled = installedPkgs.includes('plotly');
+          if (!isPlotlyInstalled) {
+             setOutput(prev => [...prev, { type: 'out', content: '> Plotly detected. Installing package (this may take a moment)...' }]);
+             try {
+                await pyodide.runPythonAsync(`
+                    import micropip
+                    await micropip.install("plotly")
+                `);
+                await updatePackageList(); // Update installed list
+                setOutput(prev => [...prev, { type: 'out', content: '> Plotly installed.' }]);
+             } catch (e) {
+                console.warn("Plotly auto-install failed", e);
+             }
+          }
+      }
+
+      // Auto-install other packages
       try {
         await pyodide.loadPackagesFromImports(scriptContent);
-        // Update list after auto-install
-        updatePackageList();
       } catch (pkgErr) {
         console.warn("Auto-install warning:", pkgErr);
         setOutput(prev => [...prev, { type: 'err', content: 'Warning: Could not auto-install some packages.' }]);
@@ -224,6 +450,87 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
           setOutput(prev => [...prev, { type: 'err', content: text }]);
         }
       });
+
+      // INJECT PATCHES (Matplotlib & Plotly & Three.js helper if needed)
+      // Note: We don't monkey patch Three.js, but we ensure the environment is clean
+      await pyodide.runPythonAsync(`
+import matplotlib.pyplot as plt
+import io, base64
+from js import document, window
+import sys
+
+# Global variable to hold the last figure for export
+_neoforge_last_fig = None
+
+def custom_show():
+    global _neoforge_last_fig
+    _neoforge_last_fig = plt.gcf()
+    
+    target = document.getElementById("plot-root")
+    if not target:
+        return
+    
+    buf = io.BytesIO()
+    # Save as transparent PNG for display
+    _neoforge_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
+    buf.seek(0)
+    img_str = base64.b64encode(buf.read()).decode('utf-8')
+    
+    img = document.createElement("img")
+    img.src = "data:image/png;base64," + img_str
+    img.style.maxWidth = "100%"
+    img.style.height = "auto"
+    img.style.marginBottom = "16px"
+    img.style.borderRadius = "8px"
+    img.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+    
+    target.appendChild(img)
+    # Close the figure in pyplot to free memory and state, but _neoforge_last_fig keeps the object alive
+    plt.close(_neoforge_last_fig)
+
+def export_last_plot(fmt):
+    global _neoforge_last_fig
+    if _neoforge_last_fig is None:
+        return None
+    
+    buf = io.BytesIO()
+    mime = "image/png"
+    
+    if fmt == 'jpg' or fmt == 'jpeg':
+        _neoforge_last_fig.savefig(buf, format='jpg', bbox_inches='tight', facecolor='white')
+        mime = "image/jpeg"
+    elif fmt == 'svg':
+        _neoforge_last_fig.savefig(buf, format='svg', bbox_inches='tight')
+        mime = "image/svg+xml"
+    elif fmt == 'pdf':
+        _neoforge_last_fig.savefig(buf, format='pdf', bbox_inches='tight')
+        mime = "application/pdf"
+    else:
+        _neoforge_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
+        
+    buf.seek(0)
+    b64 = base64.b64encode(buf.read()).decode('utf-8')
+    return f"data:{mime};base64,{b64}"
+
+# Monkey patch plt.show
+plt.show = custom_show
+
+# PLOTLY PATCH
+try:
+    import plotly.graph_objects as go
+    import plotly.io as pio
+
+    def _neoforge_plotly_show(fig, *args, **kwargs):
+        json_str = fig.to_json()
+        window.renderPlotly(json_str)
+
+    # Patch Figure.show
+    go.Figure.show = _neoforge_plotly_show
+    # Set default renderer to None to avoid browser open attempts
+    pio.renderers.default = None
+except ImportError:
+    pass
+      `);
 
       // Execute
       await pyodide.runPythonAsync(scriptContent);
@@ -263,22 +570,82 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
     }
   };
 
-  const performDownload = () => {
+  const performDownload = async () => {
     let name = fileName.trim();
-    if (!name) name = 'script.py';
-    if (!name.endsWith('.py')) name += '.py';
+    if (!namingTarget) return;
 
-    const blob = new Blob([scriptContent], { type: 'text/x-python' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (namingTarget === 'script') {
+        if (!name) name = 'script.py';
+        if (!name.endsWith('.py')) name += '.py';
 
-    setIsNaming(false);
+        const blob = new Blob([scriptContent], { type: 'text/x-python' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } else if (namingTarget === 'plot') {
+        if (!name) name = 'plot';
+        
+        // Ensure extension matches format
+        const ext = `.${plotFormat}`;
+        if (!name.toLowerCase().endsWith(ext)) {
+            // Replace existing extension if present, else append
+            if (name.match(/\.(png|jpg|jpeg|svg|pdf)$/i)) {
+                name = name.replace(/\.[^.]+$/, ext);
+            } else {
+                name += ext;
+            }
+        }
+
+        try {
+            // Attempt to export via Python logic (allows SVG/PDF etc)
+            let dataUrl = null;
+            if (pyodideRef.current) {
+                 dataUrl = await pyodideRef.current.runPythonAsync(`export_last_plot('${plotFormat}')`);
+            }
+
+            if (dataUrl) {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                 // Fallback to DOM extraction (PNG only)
+                 // This primarily handles matplotlib images. 
+                 // For Plotly, we might need Plotly.toImage if we wanted to support download.
+                 // Currently keeping simple for matplotlib consistency.
+                 const images = plotRootRef.current?.querySelectorAll('img');
+                 if (!images || images.length === 0) {
+                     setOutput(prev => [...prev, { type: 'err', content: 'No saved plot found (Plotly downloads are currently manual via the plot toolbar).' }]);
+                     setNamingTarget(null);
+                     return;
+                 }
+                 const img = images[images.length - 1] as HTMLImageElement;
+                 
+                 if (plotFormat !== 'png') {
+                     setOutput(prev => [...prev, { type: 'err', content: `Warning: Falling back to PNG. Could not generate ${plotFormat} from source.` }]);
+                 }
+                 
+                 const a = document.createElement('a');
+                 a.href = img.src;
+                 a.download = name.replace(/\.[^.]+$/, '.png');
+                 document.body.appendChild(a);
+                 a.click();
+                 document.body.removeChild(a);
+            }
+        } catch (e) {
+            console.error("Download failed", e);
+            setOutput(prev => [...prev, { type: 'err', content: 'Failed to export plot.' }]);
+        }
+    }
+
+    setNamingTarget(null);
   };
 
   const handleCopy = async () => {
@@ -317,20 +684,35 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
         </div>
         
         <div className="flex items-center space-x-2">
-           {isNaming ? (
+           {namingTarget ? (
             <div className="flex items-center bg-[#333] rounded-md px-1 mr-1 animate-in fade-in zoom-in duration-200">
+               <span className="text-[10px] text-zinc-500 mr-2 ml-1 whitespace-nowrap">
+                   {namingTarget === 'script' ? 'Save Script:' : 'Save Plot:'}
+               </span>
                <input 
                   type="text" 
                   value={fileName}
                   onChange={(e) => setFileName(e.target.value)}
                   className="bg-transparent border-none text-zinc-200 text-xs px-2 py-1.5 w-32 focus:outline-none font-mono placeholder-zinc-500"
                   autoFocus
-                  placeholder="filename.py"
+                  placeholder={namingTarget === 'script' ? "script.py" : `plot.${plotFormat}`}
                   onKeyDown={(e) => {
                       if (e.key === 'Enter') performDownload();
-                      if (e.key === 'Escape') setIsNaming(false);
+                      if (e.key === 'Escape') setNamingTarget(null);
                   }}
                />
+               {namingTarget === 'plot' && (
+                 <select 
+                   value={plotFormat}
+                   onChange={(e) => setPlotFormat(e.target.value as any)}
+                   className="bg-[#2d2d2d] border-none text-zinc-300 text-xs py-1 px-1 mr-2 rounded focus:ring-0 cursor-pointer"
+                 >
+                   <option value="png">PNG</option>
+                   <option value="jpg">JPG</option>
+                   <option value="svg">SVG</option>
+                   <option value="pdf">PDF</option>
+                 </select>
+               )}
                <button 
                 onClick={performDownload} 
                 className="p-1 hover:bg-[#444] rounded text-zinc-400 hover:text-green-400 transition-colors"
@@ -339,7 +721,7 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
                  <Check className="w-3 h-3" />
                </button>
                <button 
-                onClick={() => setIsNaming(false)} 
+                onClick={() => setNamingTarget(null)} 
                 className="p-1 hover:bg-[#444] rounded text-zinc-400 hover:text-red-400 transition-colors"
                 title="Cancel"
                >
@@ -348,6 +730,25 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
             </div>
            ) : (
             <>
+              {/* Load Example Button */}
+              <button
+                onClick={handleLoadExample}
+                className="p-1.5 hover:bg-[#333] rounded-md transition-colors text-zinc-400 hover:text-white"
+                title="Load 2D Example"
+              >
+                <BookOpen className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={handleLoad3DExample}
+                className="p-1.5 hover:bg-[#333] rounded-md transition-colors text-zinc-400 hover:text-white"
+                title="Load 3D Example"
+              >
+                <Box className="w-4 h-4" />
+              </button>
+
+              <div className="w-px h-4 bg-[#444] mx-1"></div>
+
               {/* Package Manager Toggle */}
               <button
                 onClick={() => setShowPackageManager(!showPackageManager)}
@@ -386,12 +787,28 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
               >
                 {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
               </button>
+              
               <button 
-                onClick={() => setIsNaming(true)}
+                onClick={() => {
+                    setFileName('script.py');
+                    setNamingTarget('script');
+                }}
                 className="p-1.5 hover:bg-[#333] rounded-md transition-colors text-zinc-400 hover:text-white"
                 title="Download .py"
               >
                 <Download className="w-4 h-4" />
+              </button>
+
+              <button 
+                onClick={() => {
+                    setFileName('plot');
+                    setPlotFormat('png');
+                    setNamingTarget('plot');
+                }}
+                className="p-1.5 hover:bg-[#333] rounded-md transition-colors text-zinc-400 hover:text-white"
+                title="Save Plot as Image"
+              >
+                <ImageIcon className="w-4 h-4" />
               </button>
             </>
            )}
@@ -444,11 +861,21 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
                 <div className="flex items-center justify-between p-3 border-b border-[#333]">
                     <h3 className="font-semibold text-zinc-100 flex items-center gap-2">
                         <Package className="w-4 h-4" />
-                        Packages
+                        Packages <span className="text-xs text-zinc-500 font-normal">({installedPkgs.length})</span>
                     </h3>
-                    <button onClick={() => setShowPackageManager(false)} className="text-zinc-400 hover:text-white">
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button 
+                            onClick={() => updatePackageList()}
+                            disabled={isRefreshingPkgs}
+                            className={`p-1.5 hover:bg-[#333] rounded text-zinc-400 hover:text-white transition-colors ${isRefreshingPkgs ? 'animate-spin' : ''}`}
+                            title="Refresh List"
+                        >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setShowPackageManager(false)} className="p-1.5 text-zinc-400 hover:text-white hover:bg-[#333] rounded">
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="p-3 border-b border-[#333]">
@@ -466,7 +893,7 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
                         <button 
                             type="submit"
                             disabled={isInstallingPkg || !pkgSearch}
-                            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-2 py-1 rounded text-xs font-medium"
+                            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-2 py-1 rounded text-xs font-medium min-w-[60px] flex items-center justify-center"
                         >
                             {isInstallingPkg ? <Loader2 className="w-3 h-3 animate-spin" /> : "Install"}
                         </button>
@@ -476,19 +903,30 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
                     </p>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                     <div className="space-y-1">
-                        {installedPkgs.length === 0 ? (
-                            <div className="text-center py-4 text-zinc-600 italic text-xs">No packages detected yet.</div>
+                        {isInstallingPkg && pkgSearch && (
+                            <div className="flex items-center justify-between p-2 bg-[#252526]/50 rounded border border-blue-500/30 animate-pulse">
+                                <span className="text-zinc-400 text-xs flex items-center gap-2">
+                                    <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                                    Installing {pkgSearch}...
+                                </span>
+                            </div>
+                        )}
+                        
+                        {installedPkgs.length === 0 && !isInstallingPkg ? (
+                            <div className="text-center py-8 text-zinc-600 italic text-xs flex flex-col items-center">
+                                <Package className="w-8 h-8 opacity-20 mb-2" />
+                                <span>No packages installed yet.</span>
+                            </div>
                         ) : (
                             installedPkgs.map((pkg, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-2 bg-[#252526] rounded group">
-                                    <span className="text-zinc-300 text-xs">{pkg}</span>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                       <span className="text-[10px] text-green-500 flex items-center gap-0.5">
-                                           <Check className="w-3 h-3" />
-                                       </span>
-                                    </div>
+                                <div key={idx} className="flex items-center justify-between p-2 bg-[#252526] rounded group hover:bg-[#2d2d2d] transition-colors border border-transparent hover:border-[#444]">
+                                    <span className="text-zinc-300 text-xs font-mono">{pkg}</span>
+                                    <span className="text-[10px] text-green-500 bg-green-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                        <Check className="w-3 h-3" />
+                                        Installed
+                                    </span>
                                 </div>
                             ))
                         )}
@@ -498,12 +936,12 @@ export const PythonRunner: React.FC<PythonRunnerProps> = ({ code: initialCode, o
                  <div className="p-3 border-t border-[#333] bg-[#252526]/50">
                     <button 
                         onClick={handleReloadEnvironment}
-                        className="w-full flex items-center justify-center gap-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/50 rounded py-1.5 text-xs transition-colors"
+                        className="w-full flex items-center justify-center gap-2 bg-red-900/10 hover:bg-red-900/20 text-red-400 border border-red-900/30 rounded py-2 text-xs transition-colors"
                     >
                         <Trash2 className="w-3 h-3" />
                         Reset Environment
                     </button>
-                    <p className="text-[10px] text-zinc-500 text-center mt-1">
+                    <p className="text-[10px] text-zinc-600 text-center mt-2">
                         Reloads page to uninstall all packages.
                     </p>
                 </div>

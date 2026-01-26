@@ -20,6 +20,21 @@
         }
       }
     </script>
+    <script>
+      (function() {
+        try {
+          const savedTheme = localStorage.getItem('neoforge-theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {
+          console.error("Theme init error", e);
+        }
+      })();
+    </script>
     <style>
       :root {
         --background: #f9fafb; /* gray-50 */

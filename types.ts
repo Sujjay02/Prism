@@ -1,3 +1,4 @@
+
 export interface GeneratedUI {
   explanation: string;
   code: string;
@@ -16,13 +17,14 @@ export interface HistoryItem {
   files?: UploadedFile[];
   result: GeneratedUI;
   timestamp: number;
+  isPublished?: boolean;
 }
 
 export interface InputAreaProps {
   prompt: string;
-  setPrompt: (prompt: string) => void;
+  setPrompt: (prompt: string | ((prev: string) => string)) => void;
   files: UploadedFile[];
-  setFiles: (files: UploadedFile[]) => void;
+  setFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
   onGenerate: () => void;
   loading: boolean;
 }
@@ -33,6 +35,7 @@ export interface CodePreviewProps {
 
 export interface CodeViewerProps {
   code: string;
+  explanation?: string;
 }
 
 export interface PythonRunnerProps {

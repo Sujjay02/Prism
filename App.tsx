@@ -7,7 +7,7 @@ import { PythonRunner } from './components/PythonRunner';
 import { HistorySidebar } from './components/HistorySidebar';
 import { generateUI } from './services/geminiService';
 import { GeneratedUI, HistoryItem, UploadedFile } from './types';
-import { Code2, Eye, Loader2, Sparkles, AlertTriangle, RefreshCcw, Terminal, ExternalLink } from 'lucide-react';
+import { Code2, Eye, Loader2, Sparkles, AlertTriangle, RefreshCcw, Terminal, ExternalLink, Rocket, ArrowRight, Activity, Box, LayoutDashboard, Globe, Calculator, Kanban, CloudSun, Gamepad2, ShoppingCart, Music } from 'lucide-react';
 
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -19,19 +19,98 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'preview' | 'code' | 'python'>('preview');
   
   // Theme State
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('neoforge-theme');
+    if (saved) return saved === 'dark';
+    // Default to dark if no preference found, or check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   // History State
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // Starter Prompts State (Randomized on mount)
+  const [starterPrompts] = useState(() => {
+    const allPrompts = [
+      {
+        icon: <Box className="w-5 h-5 text-purple-500" />,
+        title: "Lorenz Attractor 3D",
+        description: "Interactive react-three-fiber visualization.",
+        prompt: "Generate a 3D visualization of the Lorenz Attractor using react-three-fiber. Include sliders to control the parameters Sigma, Rho, and Beta. Trace the path of the particle over time and make the plot interactive."
+      },
+      {
+        icon: <LayoutDashboard className="w-5 h-5 text-blue-500" />,
+        title: "SaaS Dashboard",
+        description: "Modern analytics dashboard with charts.",
+        prompt: "Create a modern dark-themed SaaS dashboard with a sidebar navigation, a top header with user profile, and a main grid layout containing 4 stat cards (Revenue, Users, Bounce Rate, Active) and a large placeholder for a main chart."
+      },
+      {
+        icon: <Activity className="w-5 h-5 text-green-500" />,
+        title: "Python Data Analysis",
+        description: "Generate synthetic data and plot it.",
+        prompt: "Write a Python script that generates a synthetic dataset of monthly sales for 3 different products over 2 years. Calculate the rolling average and plot the results using matplotlib with a dark theme."
+      },
+      {
+        icon: <Globe className="w-5 h-5 text-indigo-500" />,
+        title: "Startup Landing Page",
+        description: "Hero section with features and pricing.",
+        prompt: "Create a landing page for a SaaS startup. Include a hero section with a gradient headline, a 'Features' grid with 3 cards, and a 'Pricing' section with 3 tiers. Use a modern, clean design with Tailwind CSS."
+      },
+      {
+        icon: <Calculator className="w-5 h-5 text-orange-500" />,
+        title: "React Calculator",
+        description: "Functional calculator with history tape.",
+        prompt: "Build a fully functional calculator component in React. It should support basic arithmetic operations, have a clean grid layout for buttons, and display a history tape of recent calculations on the side."
+      },
+      {
+        icon: <Kanban className="w-5 h-5 text-pink-500" />,
+        title: "Kanban Board",
+        description: "Task management board with columns.",
+        prompt: "Create a Kanban board UI with three columns: 'To Do', 'In Progress', and 'Done'. Include a button to add new tasks and style the task cards to look like sticky notes."
+      },
+      {
+        icon: <CloudSun className="w-5 h-5 text-sky-500" />,
+        title: "Weather Dashboard",
+        description: "Weather forecast with current conditions.",
+        prompt: "Design a weather dashboard card. It should show the current temperature (large font), condition icon, humidity, wind speed, and a horizontal list for the 5-day forecast. Use a glassmorphism style."
+      },
+      {
+        icon: <Gamepad2 className="w-5 h-5 text-red-500" />,
+        title: "Snake Game",
+        description: "Classic Snake game using HTML5 Canvas.",
+        prompt: "Create a fully playable Snake game using React and HTML5 Canvas. Implement controls using arrow keys, score tracking, and a game over screen."
+      },
+      {
+        icon: <ShoppingCart className="w-5 h-5 text-yellow-500" />,
+        title: "E-commerce Product",
+        description: "Product details with gallery and cart.",
+        prompt: "Build an e-commerce product detail page. It should feature a main image with thumbnail gallery, product title, price, size selector, quantity input, and an 'Add to Cart' button."
+      },
+      {
+        icon: <Music className="w-5 h-5 text-rose-500" />,
+        title: "Music Player",
+        description: "Audio player with waveform visualizer.",
+        prompt: "Create a sleek music player interface. It needs play/pause/skip controls, a progress bar, volume slider, and a visual representation of the audio waveform. Use a dark, futuristic aesthetic."
+      }
+    ];
+
+    // Shuffle array
+    for (let i = allPrompts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allPrompts[i], allPrompts[j]] = [allPrompts[j], allPrompts[i]];
+    }
+
+    return allPrompts.slice(0, 3);
+  });
+
   useEffect(() => {
-    // Check local storage or system preference on mount if persistence is needed
-    // For now, default to dark as set in useState(true) and ensure class is present
     if (isDark) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('neoforge-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('neoforge-theme', 'light');
     }
   }, [isDark]);
 
@@ -74,6 +153,7 @@ const App: React.FC = () => {
         files: [...files], // Save a copy of the files
         result: data,
         timestamp: Date.now(),
+        isPublished: false,
       };
 
       setHistory(prev => [...prev, newHistoryItem]);
@@ -129,6 +209,17 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTogglePublish = () => {
+    if (!currentHistoryId) return;
+
+    setHistory(prev => prev.map(item => {
+        if (item.id === currentHistoryId) {
+            return { ...item, isPublished: !item.isPublished };
+        }
+        return item;
+    }));
+  };
+
   const getErrorDetails = (errorMsg: string) => {
     if (errorMsg.includes("API Key")) {
       return {
@@ -165,7 +256,14 @@ const App: React.FC = () => {
     };
   };
 
+  const handleStarterClick = (starterPrompt: string) => {
+    setPrompt(starterPrompt);
+    handleGenerate(starterPrompt);
+  };
+
   const isCurrentResultPython = result ? isPythonCode(result.code) : false;
+  const currentItem = history.find(h => h.id === currentHistoryId);
+  const isPublished = currentItem?.isPublished || false;
 
   return (
     <div className="flex flex-col h-screen bg-background text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden transition-colors duration-300">
@@ -188,15 +286,38 @@ const App: React.FC = () => {
           <div className="flex-1 flex flex-col overflow-hidden w-full px-4 pt-4 pb-24 max-w-7xl mx-auto">
             
             {!result && !loading && !error && (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 opacity-50">
-                <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 transition-colors">
-                  <Sparkles className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-in fade-in duration-500">
+                <div className="space-y-4">
+                    <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
+                      <Sparkles className="w-10 h-10 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Ready to Forge</h2>
+                      <p className="text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mt-2 text-lg">
+                        What will you build today?
+                      </p>
+                    </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-300">Ready to Forge</h2>
-                  <p className="text-zinc-500 dark:text-zinc-500 max-w-md mx-auto mt-2">
-                    Describe a UI component or upload a sketch, and I will generate the code.
-                  </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-4xl px-4">
+                   {starterPrompts.map((starter, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => handleStarterClick(starter.prompt)}
+                        className="flex flex-col text-left p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all group shadow-sm hover:shadow-md"
+                      >
+                         <div className="flex items-center justify-between mb-3">
+                            <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 group-hover:bg-white dark:group-hover:bg-zinc-700 transition-colors">
+                                {starter.icon}
+                            </div>
+                            <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-300 transform group-hover:translate-x-1 transition-all" />
+                         </div>
+                         <h3 className="font-semibold text-zinc-900 dark:text-zinc-200 mb-1">{starter.title}</h3>
+                         <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                            {starter.description}
+                         </p>
+                      </button>
+                   ))}
                 </div>
               </div>
             )}
@@ -267,7 +388,23 @@ const App: React.FC = () => {
                     )}
                   </div>
 
-                  <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800 shrink-0 self-end sm:self-auto">
+                  <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800 shrink-0 self-end sm:self-auto">
+                    {/* Publish Toggle Button */}
+                    <button
+                        onClick={handleTogglePublish}
+                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm transition-all ${
+                          isPublished
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 ring-1 ring-purple-500/30'
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                        }`}
+                        title={isPublished ? "Unpublish App" : "Publish as App"}
+                      >
+                        <Rocket className={`w-4 h-4 ${isPublished ? 'fill-current' : ''}`} />
+                        <span>{isPublished ? 'Published' : 'Publish'}</span>
+                    </button>
+                    
+                    <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700 mx-1"></div>
+
                     {!isCurrentResultPython && (
                       <button
                         onClick={() => setViewMode('preview')}
@@ -322,7 +459,7 @@ const App: React.FC = () => {
                      />
                   )}
                   {viewMode === 'code' && (
-                    <CodeViewer code={result.code} />
+                    <CodeViewer code={result.code} explanation={result.explanation} />
                   )}
                 </div>
               </div>

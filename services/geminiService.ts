@@ -8,7 +8,7 @@ explanation: A one-sentence summary of what you built.
 code: The code content.
 
 MODE 1: PYTHON REQUESTS
-If the user specifically asks for "Python", "script", "math calculation", "numpy", or "data processing", OR if the request implies data analysis/simulation:
+If the user specifically asks for "Python", "script", "math calculation", "numpy", or "data processing", OR if the request implies data analysis/simulation (UNLESS the user also asks for "3D", "Three.js", or "React"):
 - Generate PURE PYTHON code compatible with Pyodide (WASM).
 - Do NOT use markdown code blocks.
 - VISUALIZATION & UI (MANDATORY):
@@ -16,15 +16,16 @@ If the user specifically asks for "Python", "script", "math calculation", "numpy
   - You MUST use \`from js import document, window, Math\` to interact with the page.
   - TARGET: Render all graphics, plots, status text, and UI controls into the div with ID "plot-root".
   - INITIALIZATION: Always start by clearing the target: \`document.getElementById("plot-root").innerHTML = ""\`.
+  - PLOTTING: Use \`matplotlib.pyplot\`. Calling \`plt.show()\` will automatically render the plot to the "plot-root" div.
   - TEXT OUTPUT: If the result is text-based (e.g., calculated numbers), render it as styled HTML elements (<div>, <table>, <h3>) inside "plot-root".
   - ANIMATION: Use \`window.requestAnimationFrame\` with a Python callback (wrapped in \`pyodide.ffi.create_proxy\`) for smooth real-time simulations.
   - INTERACTIVITY: Create standard HTML inputs (sliders, buttons) using \`document.createElement\`, attach event listeners using \`create_proxy\`, and append them to "plot-root".
-  - PLOTTING: For static plots, use \`matplotlib.pyplot\`.
   
 MODE 2: REACT / 3D / COMPONENT REQUESTS
-If the user asks for a "React Component", "Visualizer", "Three.js", "React Three Fiber", "R3F", "3D", "WebGL", or "Shader":
+If the user asks for "React Component", "Visualizer", "Three.js", "React Three Fiber", "R3F", "3D", "WebGL", "Shader", "Physics", or "Effects":
 - You MUST generate a self-contained HTML file that runs the React code immediately using Babel Standalone.
-- Use the exact template structure below (adjusting imports as needed, but keeping the setup):
+- Use the exact template structure below.
+- CRITICAL: The import map uses 'external' flags to prevent duplicate React/Three instances. Do NOT change the import map versions unless necessary.
 
 <!DOCTYPE html>
 <html lang="en">
@@ -37,40 +38,102 @@ If the user asks for a "React Component", "Visualizer", "Three.js", "React Three
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
         "three": "https://esm.sh/three@0.160.0",
-        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12",
-        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1",
-        "lucide-react": "https://esm.sh/lucide-react@0.263.1"
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber",
+        "@react-three/cannon": "https://esm.sh/@react-three/cannon@6.6.0?external=react,react-dom,three,@react-three/fiber",
+        "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.0?external=react,react-dom,three,@react-three/fiber",
+        "postprocessing": "https://esm.sh/postprocessing@6.34.1?external=three",
+        "leva": "https://esm.sh/leva@0.9.35?external=react,react-dom",
+        "lucide-react": "https://esm.sh/lucide-react@0.263.1?external=react,react-dom",
+        "uuid": "https://esm.sh/uuid@9.0.1"
       }
     }
   </script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; background-color: #111; color: white; }
+    body { margin: 0; overflow: hidden; background-color: #000; color: white; }
+    #root { width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
-  <div id="root" class="w-screen h-screen"></div>
+  <div id="root"></div>
   <script type="text/babel" data-type="module">
-    import React, { useState, useEffect, useRef, useMemo } from 'react';
+    import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
     import { createRoot } from 'react-dom/client';
     import * as THREE from 'three';
-    import { Canvas, useFrame, useThree } from '@react-three/fiber';
-    import { OrbitControls, Text, Html, PerspectiveCamera } from '@react-three/drei';
-    import { ArrowRight } from 'lucide-react';
+    import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
+    import { OrbitControls, Text, Html, PerspectiveCamera, Environment, Float, Stars, Trail, Sparkles } from '@react-three/drei';
+    import { Physics, useBox, usePlane, useSphere } from '@react-three/cannon';
+    import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+    import { useControls } from 'leva';
+    import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+
+    // Error Boundary Component
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="flex flex-col items-center justify-center h-full bg-red-900/20 text-red-200 p-4 font-mono text-sm text-center">
+              <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
+              <p className="font-bold">Rendering Error</p>
+              <p className="opacity-75">{this.state.error.message}</p>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
 
     // --- GENERATED COMPONENT START ---
-    // (Insert the requested component here, e.g., Visualizer3D)
+    // (Insert your component here.)
     
     // --- APP WRAPPER ---
+    // AI NOTE: You must decide if your component needs to be wrapped in a <Canvas> or if it includes one.
     const App = () => {
-      // (If the component needs data, generate mock data here)
-      // e.g. const data = useMemo(() => [...], []);
-      
       return (
-        <div className="w-full h-full">
-           {/* Render the component here */}
-        </div>
+        <ErrorBoundary>
+          <div className="w-full h-full bg-black relative">
+             {/* 
+               SCENARIO A: If your generated component returns meshes/lights (needs context), wrap it:
+               <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
+                  <color attach="background" args={['#101010']} />
+                  <Suspense fallback={null}>
+                    <YourComponent />
+                    <Environment preset="city" />
+                  </Suspense>
+                  <OrbitControls makeDefault />
+                  <ambientLight intensity={0.5} />
+                  <pointLight position={[10, 10, 10]} intensity={1} />
+               </Canvas>
+
+               SCENARIO B: If your generated component ALREADY has a <Canvas> (e.g. returns <Canvas>...</Canvas>), just render it:
+               <YourComponent />
+             */}
+             
+             {/* REPLACE THIS WITH YOUR LOGIC BASED ON THE COMPONENT YOU WROTE */}
+             <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
+                <color attach="background" args={['#101010']} />
+                <Suspense fallback={null}>
+                  <group>
+                     {/* <YourComponent /> */}
+                  </group>
+                </Suspense>
+                <OrbitControls makeDefault />
+                <ambientLight intensity={0.5} />
+                <pointLight position={[10, 10, 10]} intensity={1} />
+                <Environment preset="city" />
+             </Canvas>
+          </div>
+        </ErrorBoundary>
       );
     };
 
@@ -80,12 +143,39 @@ If the user asks for a "React Component", "Visualizer", "Three.js", "React Three
 </body>
 </html>
 
+CAPABILITIES & FEATURES:
+- If the user asks for "physics", "gravity", "falling", "collisions", or "simulation":
+  - Use <Physics> from @react-three/cannon wrapping the scene.
+  - Use hooks like useBox, useSphere, usePlane for bodies.
+- If the user asks for "bloom", "glow", "neon", "post-processing", or "effects":
+  - Use <EffectComposer> with <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />.
+- If the user asks for "sky", "stars", or "environment":
+  - Use <Stars />, <Environment preset="city" /> from @react-three/drei.
+- If the user asks for "sliders", "controls", "parameters", or "toggles" in a 3D context:
+  - Use \`useControls\` from "leva". 
+  - Example: \`const { radius, color } = useControls({ radius: { value: 1, min: 0.1, max: 2 }, color: '#fff' })\`.
+  - Leva renders a UI panel automatically. Do not create HTML controls manually unless specifically requested.
+- If the user asks for "vectors", "arrows", "Visualizer3D", or "field":
+  - Create a \`VectorArrow\` component using primitives (cylinder + cone) or \`<arrowHelper />\`.
+  - NOTE: \`<arrowHelper />\` arguments in R3F are \`args={[dir, origin, length, color, headLength, headWidth]}\`.
+  - Scale arrow length by magnitude.
+  - Color arrows based on magnitude (e.g., Low=Blue, High=Red).
+  - Use \`OrbitControls\` to allow rotation.
+
 MODE 3: STANDARD HTML UI (Default)
 For all other requests (landing pages, forms, dashboards):
 - Generate a single HTML string with embedded CSS (Tailwind) and JS.
 - Use <script src="https://cdn.tailwindcss.com"></script>.
 - Use 'https://placehold.co/{width}x{height}' for images.
 - Use SVG icons directly.
+
+NOTIFICATIONS & APP BEHAVIOR:
+If the user asks for a "planner", "calendar", "tracker" (e.g. water, habit), or "reminder":
+- You MUST implement the browser \`Notification\` API.
+- Add a button to request permissions: \`Notification.requestPermission()\`.
+- Use \`setInterval\` to check for due tasks/events and trigger \`new Notification("Title", { body: "..." })\` when appropriate.
+- PERSISTENCE: Use \`localStorage\` to save the user's data (tasks, water logs, events) so it remains after reload.
+- STATE: Use React \`useState\` and \`useEffect\` to load/save from \`localStorage\`.
 
 VISION INSTRUCTIONS:
 - Analyze images for UI structure or data patterns.
@@ -221,5 +311,36 @@ export const generateUI = async (prompt: string, files: UploadedFile[] = [], pre
   } catch (error: any) {
     console.error("Gemini Generation Error:", error);
     throw new Error(error.message || "Failed to generate UI");
+  }
+};
+
+export const transcribeAudio = async (audioBase64: string, mimeType: string): Promise<string> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  try {
+    const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: {
+            parts: [
+                {
+                    inlineData: {
+                        mimeType: mimeType,
+                        data: audioBase64
+                    }
+                },
+                {
+                    text: "Transcribe the following audio exactly as spoken. Do not add any other text."
+                }
+            ]
+        }
+    });
+    return response.text || "";
+  } catch (error) {
+      console.error("Transcription error:", error);
+      throw error;
   }
 };

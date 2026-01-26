@@ -1,6 +1,7 @@
-import React, { KeyboardEvent, useRef } from 'react';
-import { Send, Sparkles, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react';
+import React, { KeyboardEvent, useRef, useState } from 'react';
+import { Send, Sparkles, Paperclip, X, Image as ImageIcon, FileText, Mic, MicOff, Loader2 } from 'lucide-react';
 import { InputAreaProps } from '../types';
+import { transcribeAudio } from '../services/geminiService';
 
 export const InputArea: React.FC<InputAreaProps> = ({ 
   prompt, 
@@ -11,9 +12,14 @@ export const InputArea: React.FC<InputAreaProps> = ({
   loading 
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !loading) {
+    if (e.key === 'Enter' && !loading && !isRecording && !isTranscribing) {
       onGenerate();
     }
   };
@@ -54,6 +60,66 @@ export const InputArea: React.FC<InputAreaProps> = ({
     setFiles(files.filter((_, i) => i !== index));
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        
+        // Convert to base64
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+           const base64Result = reader.result?.toString();
+           if (base64Result) {
+             const base64Data = base64Result.split(',')[1];
+             setIsTranscribing(true);
+             try {
+               const text = await transcribeAudio(base64Data, blob.type || 'audio/webm');
+               setPrompt((prev) => prev + (prev ? ' ' : '') + text);
+             } catch (e) {
+               console.error("Transcription failed", e);
+             } finally {
+               setIsTranscribing(false);
+             }
+           }
+        };
+
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please ensure permissions are granted.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <div className="relative group">
       {/* Attached Files Preview */}
@@ -88,7 +154,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
           onClick={() => fileInputRef.current?.click()}
           className="pl-4 pr-2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors cursor-pointer"
           title="Attach Image or File"
-          disabled={loading}
+          disabled={loading || isRecording}
         >
           <Paperclip className="w-5 h-5" />
         </button>
@@ -101,21 +167,48 @@ export const InputArea: React.FC<InputAreaProps> = ({
           onChange={handleFileChange}
         />
 
+        {/* Microphone Button */}
+        <button 
+          onClick={handleMicClick}
+          disabled={loading || isTranscribing}
+          className={`px-2 transition-colors cursor-pointer flex items-center justify-center ${
+            isRecording 
+              ? 'text-red-500 hover:text-red-600 animate-pulse' 
+              : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300'
+          }`}
+          title={isRecording ? "Stop Recording" : "Record Audio"}
+        >
+          {isTranscribing ? (
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+          ) : isRecording ? (
+            <div className="relative">
+                 <Mic className="w-5 h-5" />
+                 <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+            </div>
+          ) : (
+            <Mic className="w-5 h-5" />
+          )}
+        </button>
+
         <input
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={files.length > 0 ? "Describe what to do with these files..." : "Describe the UI you want to build..."}
+          placeholder={
+            isRecording ? "Listening..." : 
+            isTranscribing ? "Transcribing..." :
+            files.length > 0 ? "Describe what to do with these files..." : "Describe the UI you want to build..."
+          }
           className="flex-1 bg-transparent border-none outline-none px-2 py-4 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
-          disabled={loading}
+          disabled={loading || isRecording || isTranscribing}
           autoFocus
         />
         <button
           onClick={onGenerate}
-          disabled={loading || (!prompt.trim() && files.length === 0)}
+          disabled={loading || isRecording || isTranscribing || (!prompt.trim() && files.length === 0)}
           className={`px-6 py-4 transition-colors font-medium flex items-center space-x-2 border-l border-zinc-100 dark:border-zinc-800 ${
-            loading || (!prompt.trim() && files.length === 0)
+            loading || isRecording || isTranscribing || (!prompt.trim() && files.length === 0)
               ? 'bg-zinc-50 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-600 cursor-not-allowed'
               : 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-white cursor-pointer'
           }`}
