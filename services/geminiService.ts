@@ -279,6 +279,102 @@ export const generateUI = async (prompt: string, files: UploadedFile[] = [], pre
   }
 };
 
+/**
+ * Explain the generated code using Gemini 3
+ * This provides educational value and demonstrates Gemini's reasoning capabilities
+ */
+export const explainCode = async (code: string): Promise<{
+  summary: string;
+  keyComponents: { name: string; description: string }[];
+  howItWorks: string;
+  customizationTips: string[];
+}> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const explainPrompt = `Analyze this code and provide a structured explanation in JSON format:
+
+\`\`\`
+${code}
+\`\`\`
+
+Return ONLY valid JSON with this structure:
+{
+  "summary": "A 1-2 sentence high-level summary of what this code does",
+  "keyComponents": [
+    { "name": "ComponentName", "description": "What it does" },
+    ...
+  ],
+  "howItWorks": "A paragraph explaining the flow and logic of the code",
+  "customizationTips": [
+    "Tip 1 for customizing this code",
+    "Tip 2 for customizing this code"
+  ]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: { parts: [{ text: explainPrompt }] },
+      config: {
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const responseText = response.text || '{}';
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('Code explanation error:', error);
+    return {
+      summary: 'Unable to generate explanation',
+      keyComponents: [],
+      howItWorks: 'An error occurred while analyzing the code.',
+      customizationTips: []
+    };
+  }
+};
+
+/**
+ * Generate improvement suggestions for the code
+ */
+export const suggestImprovements = async (code: string): Promise<string[]> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: {
+        parts: [{
+          text: `Analyze this code and suggest 3-5 specific improvements or enhancements. Return ONLY a JSON array of strings.
+
+Code:
+\`\`\`
+${code}
+\`\`\`
+
+Example format: ["Add dark mode toggle", "Implement form validation", "Add loading states"]`
+        }]
+      },
+      config: {
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const responseText = response.text || '[]';
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('Improvement suggestion error:', error);
+    return ['Unable to generate suggestions'];
+  }
+};
+
 export const transcribeAudio = async (audioBase64: string, mimeType: string): Promise<string> => {
   if (!process.env.API_KEY) {
     throw new Error("API Key is missing.");

@@ -12,6 +12,9 @@ import { TemplateGallery } from './components/TemplateGallery';
 import { DiffViewer } from './components/DiffViewer';
 import { AssetManager } from './components/AssetManager';
 import { ShareDialog } from './components/ShareDialog';
+import { CodeExplanation } from './components/CodeExplanation';
+import { GeneratingAnimation } from './components/GeneratingAnimation';
+import { VoiceCommandShowcase } from './components/VoiceCommandShowcase';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -38,6 +41,7 @@ const App: React.FC = () => {
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const [showAssetManager, setShowAssetManager] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
   const [assets, setAssets] = useState<UploadedFile[]>([]);
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
@@ -454,16 +458,19 @@ const App: React.FC = () => {
                     Manage Assets
                   </button>
                 </div>
+
+                {/* Voice Command Showcase */}
+                <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-800 w-full max-w-4xl">
+                  <VoiceCommandShowcase onTryCommand={(cmd) => {
+                    setPrompt(cmd);
+                    handleGenerate(cmd);
+                  }} />
+                </div>
               </div>
             )}
 
             {loading && (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-6 animate-pulse">
-                <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-                <p className="text-zinc-500 dark:text-zinc-400 font-medium tracking-wide">
-                  {result ? "Refining your interface..." : "Forging your interface..."}
-                </p>
-              </div>
+              <GeneratingAnimation prompt={prompt || (files.length > 0 ? 'Analyzing uploaded file...' : undefined)} />
             )}
 
             {error && (
@@ -642,6 +649,15 @@ const App: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => setShowExplanation(true)}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-purple-500 hover:text-purple-700 dark:hover:text-purple-400 transition-all bg-purple-50 dark:bg-purple-900/20"
+                        title="AI Explain"
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        <span className="hidden sm:inline text-xs font-medium">Explain</span>
+                      </button>
+
+                      <button
                         onClick={() => setShowTemplateGallery(true)}
                         className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
                         title="Templates"
@@ -735,6 +751,17 @@ const App: React.FC = () => {
           code={currentCode}
           explanation={result.explanation}
           onClose={() => setShowShareDialog(false)}
+        />
+      )}
+
+      {showExplanation && result && (
+        <CodeExplanation
+          code={currentCode}
+          onClose={() => setShowExplanation(false)}
+          onApplySuggestion={(suggestion) => {
+            setShowExplanation(false);
+            setPrompt(`${suggestion}: ${result.explanation}`);
+          }}
         />
       )}
     </div>

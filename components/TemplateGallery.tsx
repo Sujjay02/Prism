@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Grid3x3, List, Plus, Trash2, Tag } from 'lucide-react';
+import { X, Search, Grid3x3, List, Plus, Trash2, Tag, Star } from 'lucide-react';
 import { SavedTemplate } from '../types';
 import { getTemplates, deleteTemplate, saveTemplate, createTemplate } from '../services/storageService';
+import { getDefaultTemplates } from '../data/defaultTemplates';
 
 interface TemplateGalleryProps {
   onSelect: (code: string, explanation: string) => void;
@@ -30,10 +31,16 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
 
   const loadTemplates = async () => {
     setLoading(true);
-    const loaded = await getTemplates();
-    setTemplates(loaded);
+    const userTemplates = await getTemplates();
+    const defaultTemplates = getDefaultTemplates();
+    // Merge default templates with user templates (user templates come first)
+    const allTemplates = [...userTemplates, ...defaultTemplates];
+    setTemplates(allTemplates);
     setLoading(false);
   };
+
+  // Check if a template is a default (non-deletable) template
+  const isDefaultTemplate = (id: string) => id.startsWith('default-');
 
   const handleSave = async () => {
     if (!currentCode || !newTemplate.name.trim()) return;
@@ -71,7 +78,10 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['all', ...new Set(templates.map((t) => t.category))];
+  // Include all categories from both default and user templates
+  const defaultCategories = ['dashboard', 'landing', 'form', 'ui', 'game', 'data-viz', '3d', 'custom'];
+  const userCategories = templates.map((t) => t.category);
+  const categories = ['all', ...new Set([...defaultCategories, ...userCategories])];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
@@ -155,18 +165,14 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
           ) : filteredTemplates.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-zinc-400 mb-2">
-                {templates.length === 0
-                  ? 'No templates saved yet'
-                  : 'No templates match your search'}
+                No templates match your search
               </div>
-              {templates.length === 0 && currentCode && (
-                <button
-                  onClick={() => setShowSaveDialog(true)}
-                  className="text-blue-500 hover:text-blue-600 text-sm"
-                >
-                  Save your first template
-                </button>
-              )}
+              <button
+                onClick={() => setSearchTerm('')}
+                className="text-blue-500 hover:text-blue-600 text-sm"
+              >
+                Clear search
+              </button>
             </div>
           ) : (
             <div
@@ -211,16 +217,25 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(template.id);
-                    }}
-                    className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Delete template"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
+                  {isDefaultTemplate(template.id) ? (
+                    <div
+                      className="absolute top-2 right-2 p-1.5 bg-yellow-500/80 text-white rounded flex items-center space-x-1"
+                      title="Built-in template"
+                    >
+                      <Star className="w-3 h-3" />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(template.id);
+                      }}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Delete template"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

@@ -1266,6 +1266,523 @@ export const DEFAULT_TEMPLATES: SavedTemplate[] = [
 </body>
 </html>`,
   },
+
+  {
+    id: 'default-3d-solar-system',
+    name: '3D Solar System',
+    description: 'Animated solar system with orbiting planets',
+    category: '3d',
+    createdAt: 0,
+    tags: ['3d', 'solar-system', 'planets', 'animation', 'space'],
+    code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+        "three": "https://esm.sh/three@0.160.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #000; }
+    #root { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    import React, { useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { Canvas, useFrame } from '@react-three/fiber';
+    import { OrbitControls, Stars, Trail } from '@react-three/drei';
+
+    const planets = [
+      { name: 'Mercury', color: '#b5b5b5', size: 0.3, distance: 4, speed: 4 },
+      { name: 'Venus', color: '#e6c47f', size: 0.5, distance: 6, speed: 3 },
+      { name: 'Earth', color: '#6b93d6', size: 0.5, distance: 8, speed: 2 },
+      { name: 'Mars', color: '#c1440e', size: 0.4, distance: 10, speed: 1.5 },
+      { name: 'Jupiter', color: '#d8ca9d', size: 1.2, distance: 14, speed: 0.8 },
+      { name: 'Saturn', color: '#f4d59e', size: 1, distance: 18, speed: 0.6 },
+    ];
+
+    function Sun() {
+      const sunRef = useRef();
+      useFrame((state) => {
+        sunRef.current.rotation.y += 0.002;
+      });
+      return (
+        <mesh ref={sunRef}>
+          <sphereGeometry args={[2, 32, 32]} />
+          <meshBasicMaterial color="#FDB813" />
+          <pointLight intensity={2} distance={100} color="#FDB813" />
+        </mesh>
+      );
+    }
+
+    function Planet({ color, size, distance, speed }) {
+      const planetRef = useRef();
+      const orbitRef = useRef();
+
+      useFrame((state) => {
+        const time = state.clock.getElapsedTime();
+        planetRef.current.position.x = Math.cos(time * speed * 0.5) * distance;
+        planetRef.current.position.z = Math.sin(time * speed * 0.5) * distance;
+        planetRef.current.rotation.y += 0.02;
+      });
+
+      return (
+        <group>
+          {/* Orbit ring */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[distance - 0.05, distance + 0.05, 64]} />
+            <meshBasicMaterial color="#333" transparent opacity={0.3} />
+          </mesh>
+          {/* Planet */}
+          <Trail width={0.5} length={8} color={color} attenuation={(t) => t * t}>
+            <mesh ref={planetRef}>
+              <sphereGeometry args={[size, 16, 16]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+          </Trail>
+        </group>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="w-full h-full bg-black relative">
+          <Canvas camera={{ position: [0, 20, 30], fov: 60 }}>
+            <color attach="background" args={['#000010']} />
+            <ambientLight intensity={0.1} />
+            <Stars radius={100} depth={50} count={5000} factor={4} fade />
+
+            <Sun />
+            {planets.map((planet, idx) => (
+              <Planet key={idx} {...planet} />
+            ))}
+
+            <OrbitControls enablePan={false} minDistance={10} maxDistance={80} />
+          </Canvas>
+
+          <div className="absolute top-4 left-4 text-white">
+            <h1 className="text-2xl font-bold">Solar System</h1>
+            <p className="text-sm opacity-60">Drag to orbit • Scroll to zoom</p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>`,
+  },
+
+  {
+    id: 'default-3d-particles',
+    name: '3D Particle Wave',
+    description: 'Mesmerizing particle wave animation',
+    category: '3d',
+    createdAt: 0,
+    tags: ['3d', 'particles', 'wave', 'animation', 'generative'],
+    code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+        "three": "https://esm.sh/three@0.160.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #000; }
+    #root { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    import React, { useRef, useMemo } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { Canvas, useFrame } from '@react-three/fiber';
+    import { OrbitControls } from '@react-three/drei';
+    import * as THREE from 'three';
+
+    function ParticleWave() {
+      const meshRef = useRef();
+      const count = 100;
+      const sep = 0.5;
+
+      const positions = useMemo(() => {
+        const pos = new Float32Array(count * count * 3);
+        let i = 0;
+        for (let x = 0; x < count; x++) {
+          for (let z = 0; z < count; z++) {
+            pos[i] = (x - count / 2) * sep;
+            pos[i + 1] = 0;
+            pos[i + 2] = (z - count / 2) * sep;
+            i += 3;
+          }
+        }
+        return pos;
+      }, []);
+
+      const colors = useMemo(() => {
+        const cols = new Float32Array(count * count * 3);
+        for (let i = 0; i < cols.length; i += 3) {
+          cols[i] = Math.random() * 0.5 + 0.5;     // R
+          cols[i + 1] = Math.random() * 0.3;       // G
+          cols[i + 2] = Math.random() * 0.5 + 0.5; // B
+        }
+        return cols;
+      }, []);
+
+      useFrame((state) => {
+        const time = state.clock.getElapsedTime();
+        const positions = meshRef.current.geometry.attributes.position.array;
+
+        let i = 0;
+        for (let x = 0; x < count; x++) {
+          for (let z = 0; z < count; z++) {
+            const xPos = (x - count / 2) * sep;
+            const zPos = (z - count / 2) * sep;
+            positions[i + 1] = Math.sin(xPos * 0.3 + time) * Math.cos(zPos * 0.3 + time) * 2;
+            i += 3;
+          }
+        }
+        meshRef.current.geometry.attributes.position.needsUpdate = true;
+      });
+
+      return (
+        <points ref={meshRef}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              count={positions.length / 3}
+              array={positions}
+              itemSize={3}
+            />
+            <bufferAttribute
+              attach="attributes-color"
+              count={colors.length / 3}
+              array={colors}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <pointsMaterial size={0.15} vertexColors sizeAttenuation />
+        </points>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="w-full h-full bg-black relative">
+          <Canvas camera={{ position: [0, 20, 30], fov: 60 }}>
+            <color attach="background" args={['#0a0a0f']} />
+            <fog attach="fog" args={['#0a0a0f', 20, 60]} />
+            <ambientLight intensity={0.5} />
+
+            <ParticleWave />
+
+            <OrbitControls autoRotate autoRotateSpeed={0.5} enablePan={false} />
+          </Canvas>
+
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center text-white">
+            <h1 className="text-xl font-bold mb-1">Particle Wave</h1>
+            <p className="text-sm opacity-60">10,000 particles • Auto-rotating</p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>`,
+  },
+
+  {
+    id: 'default-3d-geometric',
+    name: '3D Geometric Showcase',
+    description: 'Floating geometric shapes with glass materials',
+    category: '3d',
+    createdAt: 0,
+    tags: ['3d', 'geometric', 'glass', 'shapes', 'modern'],
+    code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+        "three": "https://esm.sh/three@0.160.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #root { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    import React, { useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { Canvas, useFrame } from '@react-three/fiber';
+    import { OrbitControls, Float, MeshTransmissionMaterial, Environment } from '@react-three/drei';
+
+    function FloatingShape({ geometry, position, color, speed = 1 }) {
+      const meshRef = useRef();
+
+      useFrame((state) => {
+        const time = state.clock.getElapsedTime();
+        meshRef.current.rotation.x = time * 0.2 * speed;
+        meshRef.current.rotation.y = time * 0.3 * speed;
+      });
+
+      return (
+        <Float speed={2} rotationIntensity={0.5} floatIntensity={2}>
+          <mesh ref={meshRef} position={position}>
+            {geometry}
+            <MeshTransmissionMaterial
+              backside
+              samples={4}
+              thickness={0.5}
+              chromaticAberration={0.2}
+              anisotropy={0.3}
+              distortion={0.5}
+              distortionScale={0.5}
+              temporalDistortion={0.1}
+              color={color}
+            />
+          </mesh>
+        </Float>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="w-full h-full relative" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)' }}>
+          <Canvas camera={{ position: [0, 0, 12], fov: 50 }}>
+            <ambientLight intensity={0.5} />
+            <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
+            <pointLight position={[-10, -10, -10]} intensity={0.5} color="#ff6b6b" />
+
+            <FloatingShape
+              geometry={<torusKnotGeometry args={[1, 0.3, 128, 16]} />}
+              position={[-4, 0, 0]}
+              color="#ff6b6b"
+              speed={0.8}
+            />
+
+            <FloatingShape
+              geometry={<icosahedronGeometry args={[1.5, 0]} />}
+              position={[0, 0, 0]}
+              color="#4ecdc4"
+              speed={1}
+            />
+
+            <FloatingShape
+              geometry={<octahedronGeometry args={[1.2]} />}
+              position={[4, 0, 0]}
+              color="#ffe66d"
+              speed={1.2}
+            />
+
+            <FloatingShape
+              geometry={<dodecahedronGeometry args={[1]} />}
+              position={[-2, 3, -2]}
+              color="#a29bfe"
+              speed={0.6}
+            />
+
+            <FloatingShape
+              geometry={<tetrahedronGeometry args={[1.2]} />}
+              position={[2, -3, -2]}
+              color="#fd79a8"
+              speed={0.9}
+            />
+
+            <Environment preset="city" />
+            <OrbitControls enableZoom={true} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+          </Canvas>
+
+          <div className="absolute top-6 left-6 text-white">
+            <h1 className="text-3xl font-bold mb-2">Geometric</h1>
+            <p className="text-sm opacity-60">Glass transmission materials</p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>`,
+  },
+
+  {
+    id: 'default-3d-torus-knot',
+    name: '3D Torus Knot',
+    description: 'Animated wireframe torus knot with glow effect',
+    category: '3d',
+    createdAt: 0,
+    tags: ['3d', 'torus', 'wireframe', 'glow', 'neon'],
+    code: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
+        "three": "https://esm.sh/three@0.160.0",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
+        "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber",
+        "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.0?external=react,react-dom,three,@react-three/fiber",
+        "postprocessing": "https://esm.sh/postprocessing@6.34.1?external=three"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: #000; }
+    #root { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    import React, { useRef } from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { Canvas, useFrame } from '@react-three/fiber';
+    import { OrbitControls } from '@react-three/drei';
+    import { EffectComposer, Bloom } from '@react-three/postprocessing';
+
+    function GlowingTorusKnot() {
+      const meshRef = useRef();
+      const materialRef = useRef();
+
+      useFrame((state) => {
+        const time = state.clock.getElapsedTime();
+        meshRef.current.rotation.x = time * 0.3;
+        meshRef.current.rotation.y = time * 0.2;
+
+        // Pulse the emissive intensity
+        const pulse = Math.sin(time * 2) * 0.5 + 1;
+        materialRef.current.emissiveIntensity = pulse;
+      });
+
+      return (
+        <mesh ref={meshRef}>
+          <torusKnotGeometry args={[2, 0.6, 200, 32, 3, 5]} />
+          <meshStandardMaterial
+            ref={materialRef}
+            color="#00ffff"
+            emissive="#00ffff"
+            emissiveIntensity={1}
+            wireframe
+          />
+        </mesh>
+      );
+    }
+
+    function SecondaryKnot() {
+      const meshRef = useRef();
+
+      useFrame((state) => {
+        const time = state.clock.getElapsedTime();
+        meshRef.current.rotation.x = -time * 0.2;
+        meshRef.current.rotation.y = -time * 0.3;
+      });
+
+      return (
+        <mesh ref={meshRef} scale={0.6}>
+          <torusKnotGeometry args={[2, 0.6, 100, 16, 2, 3]} />
+          <meshStandardMaterial
+            color="#ff00ff"
+            emissive="#ff00ff"
+            emissiveIntensity={0.5}
+            wireframe
+            transparent
+            opacity={0.5}
+          />
+        </mesh>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="w-full h-full bg-black relative">
+          <Canvas camera={{ position: [0, 0, 8], fov: 50 }}>
+            <color attach="background" args={['#000000']} />
+            <ambientLight intensity={0.2} />
+
+            <GlowingTorusKnot />
+            <SecondaryKnot />
+
+            <EffectComposer>
+              <Bloom
+                luminanceThreshold={0.1}
+                luminanceSmoothing={0.9}
+                height={300}
+                intensity={1.5}
+              />
+            </EffectComposer>
+
+            <OrbitControls enableZoom={true} enablePan={false} autoRotate autoRotateSpeed={1} />
+          </Canvas>
+
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
+            <h1 className="text-2xl font-bold text-cyan-400 mb-1">Torus Knot</h1>
+            <p className="text-sm text-white opacity-60">Neon wireframe with bloom effect</p>
+          </div>
+        </div>
+      );
+    }
+
+    const root = createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>`,
+  },
 ];
 
 /**
