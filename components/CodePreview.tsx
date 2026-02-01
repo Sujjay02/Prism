@@ -18,10 +18,11 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeKey = useRef(0);
 
-  // Inject error handler script into HTML
+  // Inject error handler script and base target into HTML
   const htmlWithErrorHandler = html.replace(
     '</head>',
-    `<script>
+    `<base target="_blank">
+    <script>
       window.onerror = function(msg, url, line, col, error) {
         window.parent.postMessage({
           type: 'PRISM_IFRAME_ERROR',
@@ -34,6 +35,20 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
           type: 'PRISM_IFRAME_ERROR',
           error: 'Unhandled Promise Rejection: ' + (e.reason?.message || e.reason || 'Unknown error')
         }, '*');
+      });
+      // Make internal links work within the preview
+      document.addEventListener('click', function(e) {
+        var link = e.target.closest('a');
+        if (link) {
+          var href = link.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            e.preventDefault();
+            var target = document.querySelector(href);
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth' });
+            }
+          }
+        }
       });
     </script></head>`
   );
@@ -84,7 +99,7 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
             title="UI Preview"
             srcDoc={htmlWithErrorHandler}
             className="w-full h-full border-none bg-white"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals"
           />
           {runtimeError && (
             <ErrorOverlay

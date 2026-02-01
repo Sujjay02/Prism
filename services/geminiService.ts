@@ -134,6 +134,15 @@ For all other requests (landing pages, forms, dashboards):
 - Use 'https://placehold.co/{width}x{height}' for images.
 - Use SVG icons directly.
 
+LINKS & NAVIGATION (CRITICAL):
+- For internal anchor links (e.g., navigation to sections), use href="#section-id" and add matching id attributes to target elements.
+- For external links, always use target="_blank" rel="noopener noreferrer" to open in new tabs.
+- Make all navigation links functional - never use href="#" or javascript:void(0) as placeholders.
+- For single-page navigation menus, implement smooth scrolling: onclick="document.getElementById('section').scrollIntoView({behavior:'smooth'})"
+- Example navigation:
+  <nav><a href="#features" onclick="event.preventDefault();document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</a></nav>
+  <section id="features">...</section>
+
 NOTIFICATIONS & APP BEHAVIOR:
 If the user asks for a "planner", "calendar", "tracker" (e.g. water, habit), or "reminder":
 - You MUST implement the browser \`Notification\` API.
