@@ -11,9 +11,11 @@ const VIEWPORT_WIDTHS: Record<Viewport, string> = {
 
 interface ExtendedCodePreviewProps extends CodePreviewProps {
   viewport?: Viewport;
+  onAutofix?: (error: string) => void;
+  isFixing?: boolean;
 }
 
-export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport = 'full' }) => {
+export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport = 'full', onAutofix, isFixing = false }) => {
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const iframeKey = useRef(0);
@@ -23,17 +25,64 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
     '</head>',
     `<base target="_blank">
     <script>
+      // Track errors for better debugging
+      var errorCount = 0;
+      var lastErrorTime = 0;
+
       window.onerror = function(msg, url, line, col, error) {
+        // Throttle errors - max 1 per 100ms
+        var now = Date.now();
+        if (now - lastErrorTime < 100) return true;
+        lastErrorTime = now;
+        errorCount++;
+        if (errorCount > 5) return true; // Max 5 errors reported
+
+        // Handle generic "Script error." from cross-origin scripts
+        var errorMessage = msg;
+        if (msg === 'Script error.' || msg === 'Script error') {
+          // Try to get more info from the error object
+          if (error && error.message) {
+            errorMessage = error.message;
+          } else if (error && error.stack) {
+            errorMessage = error.stack.split('\\n')[0];
+          } else {
+            // Generic script error - likely from external CDN
+            errorMessage = 'External script error (check browser console for details)';
+          }
+        }
+
+        // Add line/col info if available
+        if (line && line > 0) {
+          errorMessage += ' (line ' + line + (col ? ', col ' + col : '') + ')';
+        }
+
         window.parent.postMessage({
           type: 'PRISM_IFRAME_ERROR',
-          error: msg + (line ? ' (line ' + line + ')' : '')
+          error: errorMessage
         }, '*');
         return true;
       };
+
       window.addEventListener('unhandledrejection', function(e) {
+        var now = Date.now();
+        if (now - lastErrorTime < 100) return;
+        lastErrorTime = now;
+        errorCount++;
+        if (errorCount > 5) return;
+
+        var reason = e.reason;
+        var errorMessage = 'Unhandled Promise Rejection: ';
+        if (reason instanceof Error) {
+          errorMessage += reason.message || reason.toString();
+        } else if (typeof reason === 'string') {
+          errorMessage += reason;
+        } else {
+          errorMessage += 'Unknown async error';
+        }
+
         window.parent.postMessage({
           type: 'PRISM_IFRAME_ERROR',
-          error: 'Unhandled Promise Rejection: ' + (e.reason?.message || e.reason || 'Unknown error')
+          error: errorMessage
         }, '*');
       });
       // Make internal links work within the preview
@@ -115,6 +164,8 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
               onRetry={handleRetry}
               onCopyError={handleCopyError}
               onDismiss={() => setRuntimeError(null)}
+              onAutofix={onAutofix ? () => onAutofix(runtimeError) : undefined}
+              isFixing={isFixing}
             />
           )}
         </div>

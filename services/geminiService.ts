@@ -28,9 +28,12 @@ If the user asks for "React Component", "Visualizer", "Three.js", "React Three F
 - CRITICAL: Use the exact import map below. The 'external' flags prevent duplicate React/Three instances.
 
 REQUIRED HTML STRUCTURE:
-1. Head section with: Tailwind CSS, import map (copy exactly), Babel standalone, and styles
+1. Head section with: Tailwind CSS (with crossorigin="anonymous"), import map (copy exactly), Babel standalone (with crossorigin="anonymous"), and styles
 2. Body with: <div id="root"></div> and a <script type="text/babel" data-type="module">
 3. Inside the script: imports, your ACTUAL component code, App wrapper, and ReactDOM render
+4. CRITICAL: All external scripts MUST have crossorigin="anonymous" attribute:
+   <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+   <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"></script>
 
 IMPORT MAP (copy exactly):
 <script type="importmap">
@@ -134,6 +137,17 @@ For all other requests (landing pages, forms, dashboards):
 - Use 'https://placehold.co/{width}x{height}' for images.
 - Use SVG icons directly.
 
+SCRIPT ERROR PREVENTION (CRITICAL):
+- ALWAYS add crossorigin="anonymous" to ALL external script tags for proper error reporting.
+  Example: <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+- ALWAYS wrap all JavaScript code in try-catch blocks to catch and report errors properly.
+- NEVER use undefined variables - always declare variables with let, const, or var before using them.
+- ALWAYS check if elements exist before accessing them: if (element) { element.doSomething(); }
+- For event listeners, use named functions declared BEFORE they are used, not after.
+- ALWAYS use strict mode: add "use strict"; at the top of scripts.
+- When using setTimeout/setInterval with functions, ensure the function is defined first.
+- Initialize all state variables at the top of your script before any functions reference them.
+
 LINKS & NAVIGATION (CRITICAL):
 - For internal anchor links (e.g., navigation to sections), use href="#section-id" and add matching id attributes to target elements.
 - For external links, always use target="_blank" rel="noopener noreferrer" to open in new tabs.
@@ -156,6 +170,16 @@ VISION INSTRUCTIONS:
 - If a wireframe is provided, strictly follow its layout.
 - If a data screenshot is provided, extract the data and generate a UI that visualizes that data.
 - If the user provides a design, replicate it pixel-perfectly using Tailwind CSS.
+
+JAVASCRIPT ERROR PREVENTION (CRITICAL):
+- ALWAYS declare functions BEFORE they are called or referenced.
+- NEVER call a function that hasn't been defined yet in the code flow.
+- Use function declarations (function name() {}) instead of function expressions (const name = function() {}) when the function needs to be called before its definition.
+- ALWAYS initialize variables before using them in functions.
+- When using DOM manipulation, wrap in DOMContentLoaded or place scripts at end of body:
+  document.addEventListener('DOMContentLoaded', function() { /* your code */ });
+- Check if elements exist before manipulating: const el = document.getElementById('x'); if (el) { el.textContent = 'y'; }
+- For React/R3F code, ensure all refs are initialized and checked: if (meshRef.current) { ... }
 
 CRITICAL:
 - Return ONLY valid JSON.

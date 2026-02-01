@@ -47,6 +47,7 @@ const App: React.FC = () => {
   const [assets, setAssets] = useState<UploadedFile[]>([]);
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
+  const [isAutoFixing, setIsAutoFixing] = useState(false);
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
@@ -233,6 +234,45 @@ const App: React.FC = () => {
     setPrompt(fixPrompt);
     handleGenerate(fixPrompt, currentCode);
   }, [handleGenerate]);
+
+  const handleAutofix = useCallback(async (errorMsg: string) => {
+    const codeToFix = editedCode || result?.code;
+    if (!codeToFix) return;
+
+    const fixPrompt = `Fix the following runtime error in the code. The error is: "${errorMsg}".
+Make sure to:
+1. Fix the specific error mentioned
+2. Ensure all variables are declared before use
+3. Ensure all functions are defined before they are called
+4. Add proper null/undefined checks where needed
+5. Return the complete fixed code`;
+
+    setIsAutoFixing(true);
+    setError(null);
+
+    try {
+      const data = await generateUI(fixPrompt, [], codeToFix);
+
+      const newHistoryItem: HistoryItem = {
+        id: Date.now().toString(),
+        prompt: `Autofix: ${errorMsg.slice(0, 50)}...`,
+        files: [],
+        result: data,
+        timestamp: Date.now(),
+        isPublished: false,
+      };
+
+      setHistory(prev => [...prev, newHistoryItem]);
+      setResult(data);
+      setCurrentHistoryId(newHistoryItem.id);
+      setEditedCode('');
+      setViewMode('preview');
+    } catch (err: any) {
+      setError(err.message || 'Failed to autofix. Please try again.');
+    } finally {
+      setIsAutoFixing(false);
+    }
+  }, [editedCode, result]);
 
   const handleSelectHistory = (item: HistoryItem) => {
     setResult(item.result);
@@ -674,7 +714,12 @@ const App: React.FC = () => {
                 {/* Viewport */}
                 <div className="flex-1 overflow-hidden relative bg-zinc-100 dark:bg-[#0d0d10]">
                   {viewMode === 'preview' && !isCurrentResultPython && (
-                    <CodePreview html={currentCode} viewport={viewport} />
+                    <CodePreview
+                      html={currentCode}
+                      viewport={viewport}
+                      onAutofix={handleAutofix}
+                      isFixing={isAutoFixing}
+                    />
                   )}
                   {viewMode === 'python' && isCurrentResultPython && (
                     <PythonRunner

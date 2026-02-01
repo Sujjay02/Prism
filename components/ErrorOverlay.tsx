@@ -1,11 +1,13 @@
 import React from 'react';
-import { AlertTriangle, RefreshCcw, Copy, Bug } from 'lucide-react';
+import { AlertTriangle, RefreshCcw, Copy, Bug, Wand2, Loader2 } from 'lucide-react';
 
 interface ErrorOverlayProps {
   error: string;
   onRetry: () => void;
   onCopyError: () => void;
   onDismiss: () => void;
+  onAutofix?: () => void;
+  isFixing?: boolean;
 }
 
 interface ParsedError {
@@ -35,6 +37,8 @@ export const ErrorOverlay: React.FC<ErrorOverlayProps> = ({
   onRetry,
   onCopyError,
   onDismiss,
+  onAutofix,
+  isFixing = false,
 }) => {
   const { category, lineNumber, message } = parseError(error);
 
@@ -64,14 +68,34 @@ export const ErrorOverlay: React.FC<ErrorOverlayProps> = ({
               {message}
             </pre>
             <p className="mt-3 text-sm text-zinc-500">
-              Click "Retry" to reload the preview, or copy the error to fix it.
+              {onAutofix ? 'Click "Autofix" to let AI fix this error, or retry/copy manually.' : 'Click "Retry" to reload the preview, or copy the error to fix it.'}
             </p>
           </div>
         </div>
         <div className="flex space-x-2 mt-4">
+          {onAutofix && (
+            <button
+              onClick={onAutofix}
+              disabled={isFixing}
+              className="flex-1 flex items-center justify-center space-x-2 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white text-sm font-medium transition-all shadow-lg shadow-purple-500/20"
+            >
+              {isFixing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Fixing...</span>
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4" />
+                  <span>Autofix with AI</span>
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={onRetry}
-            className="flex-1 flex items-center justify-center space-x-2 py-2 bg-red-600 hover:bg-red-500 rounded-lg text-white text-sm font-medium transition-colors"
+            disabled={isFixing}
+            className="flex-1 flex items-center justify-center space-x-2 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 rounded-lg text-white text-sm font-medium transition-colors"
           >
             <RefreshCcw className="w-4 h-4" />
             <span>Retry</span>
