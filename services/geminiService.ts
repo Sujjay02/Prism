@@ -28,29 +28,48 @@ If the user asks for "React Component", "Visualizer", "Three.js", "React Three F
 - CRITICAL: Use the exact import map below. These versions are tested to work together.
 
 REQUIRED HTML STRUCTURE:
-1. Head section with: Tailwind CSS, import map (copy exactly), Babel standalone, and styles
+1. Head section with: Tailwind CSS, import map (copy exactly), Babel standalone (MUST use version 7.23.5), and styles
 2. Body with: <div id="root"></div> and a <script type="text/babel" data-type="module">
 3. Inside the script: imports, your ACTUAL component code, App wrapper, and ReactDOM render
 4. CRITICAL: All external scripts MUST have crossorigin="anonymous" attribute
 
-IMPORT MAP (copy EXACTLY - these versions are tested and work together):
-<script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom": "https://esm.sh/react-dom@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "three": "https://esm.sh/three@0.162.0",
-    "three/examples/jsm/controls/OrbitControls": "https://esm.sh/three@0.162.0/examples/jsm/controls/OrbitControls",
-    "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.16.1?external=react,react-dom,three",
-    "@react-three/drei": "https://esm.sh/@react-three/drei@9.102.2?external=react,react-dom,three,@react-three/fiber",
-    "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.2?external=react,react-dom,three,@react-three/fiber",
-    "postprocessing": "https://esm.sh/postprocessing@6.35.2?external=three",
-    "maath": "https://esm.sh/maath@0.10.7?external=three",
-    "leva": "https://esm.sh/leva@0.9.35?external=react,react-dom"
+COMPLETE HEAD SECTION (copy EXACTLY):
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Scene</title>
+  <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom": "https://esm.sh/react-dom@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+      "three": "https://esm.sh/three@0.162.0",
+      "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.16.1?external=react,react-dom,three",
+      "@react-three/drei": "https://esm.sh/@react-three/drei@9.102.2?external=react,react-dom,three,@react-three/fiber",
+      "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.2?external=react,react-dom,three,@react-three/fiber",
+      "postprocessing": "https://esm.sh/postprocessing@6.35.2?external=three",
+      "maath": "https://esm.sh/maath@0.10.7?external=three",
+      "leva": "https://esm.sh/leva@0.9.35?external=react,react-dom"
+    }
   }
-}
-</script>
+  </script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-type="module">
+    // Your React/R3F code goes here
+  </script>
+</body>
+</html>
 
 REQUIRED IMPORTS (at top of script):
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
