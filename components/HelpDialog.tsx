@@ -3,7 +3,7 @@ import {
   X, HelpCircle, Keyboard, Eye, Code2, Terminal, Edit3, GitCompare,
   Smartphone, Tablet, Monitor, Maximize2, Download, Share2, Layers,
   Wand2, Mic, Sparkles, Image, Upload, Search, MessageSquare, Rocket,
-  ChevronRight, Command, CornerDownLeft
+  ChevronRight, Command, CornerDownLeft, Palette
 } from 'lucide-react';
 
 interface HelpDialogProps {
@@ -304,6 +304,17 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ isOpen, onClose }) => {
                     </div>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       Click the Voice Mode button in the sidebar to speak your prompt instead of typing.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Palette className="w-5 h-5 text-cyan-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Themes & Tools</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Click the palette icon in the header to customize the color scheme. Choose from 8 accent colors,
+                      toggle light/dark mode, apply preset themes, and access quick actions like clearing data or exporting settings.
                     </p>
                   </div>
                 </div>

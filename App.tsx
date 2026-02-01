@@ -16,6 +16,8 @@ import { CodeExplanation } from './components/CodeExplanation';
 import { GeneratingAnimation } from './components/GeneratingAnimation';
 import { VoiceCommandShowcase } from './components/VoiceCommandShowcase';
 import { VoiceMode } from './components/VoiceMode';
+import { HelpDialog } from './components/HelpDialog';
+import { ToolsSidebar } from './components/ToolsSidebar';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -44,6 +46,11 @@ const App: React.FC = () => {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [showVoiceMode, setShowVoiceMode] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [showToolsSidebar, setShowToolsSidebar] = useState(false);
+  const [accentColor, setAccentColor] = useState(() => {
+    return localStorage.getItem('prism-accent') || 'blue';
+  });
   const [assets, setAssets] = useState<UploadedFile[]>([]);
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
@@ -170,6 +177,11 @@ const App: React.FC = () => {
   const toggleTheme = () => {
     setIsDark(!isDark);
   };
+
+  // Save accent color when it changes
+  useEffect(() => {
+    localStorage.setItem('prism-accent', accentColor);
+  }, [accentColor]);
 
   const handleReset = useCallback(() => {
     setPrompt('');
@@ -432,7 +444,14 @@ Make sure to:
 
   return (
     <div className="flex flex-col h-screen bg-background text-zinc-900 dark:text-zinc-100 font-sans overflow-hidden transition-colors duration-300">
-      <Header isDark={isDark} toggleTheme={toggleTheme} onReset={handleReset} />
+      <Header
+        isDark={isDark}
+        toggleTheme={toggleTheme}
+        onReset={handleReset}
+        onHelp={() => setShowHelpDialog(true)}
+        onTools={() => setShowToolsSidebar(true)}
+        accentColor={accentColor}
+      />
 
       <div className="flex flex-1 overflow-hidden relative">
         <HistorySidebar
@@ -825,6 +844,20 @@ Make sure to:
           />
         </div>
       )}
+
+      <HelpDialog
+        isOpen={showHelpDialog}
+        onClose={() => setShowHelpDialog(false)}
+      />
+
+      <ToolsSidebar
+        isOpen={showToolsSidebar}
+        onClose={() => setShowToolsSidebar(false)}
+        isDark={isDark}
+        toggleTheme={toggleTheme}
+        accentColor={accentColor}
+        setAccentColor={setAccentColor}
+      />
     </div>
   );
 };
