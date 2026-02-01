@@ -41,12 +41,20 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
         var link = e.target.closest('a');
         if (link) {
           var href = link.getAttribute('href');
-          if (href && href.startsWith('#')) {
+          // Only handle anchor links with actual IDs (not just "#")
+          if (href && href.startsWith('#') && href.length > 1) {
             e.preventDefault();
-            var target = document.querySelector(href);
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth' });
+            try {
+              var target = document.querySelector(href);
+              if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+              }
+            } catch (err) {
+              // Invalid selector, ignore
             }
+          } else if (href === '#') {
+            // Prevent default for empty hash links
+            e.preventDefault();
           }
         }
       });

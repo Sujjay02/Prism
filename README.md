@@ -11,7 +11,7 @@
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[Live Demo](https://aistudio.google.com/app/prompts/1DByJVjJOVgokvZ_JKh1sa1GO54LXBtJb) | [Watch Video](#demo-video) | [Report Bug](https://github.com/yourusername/prism/issues)
+[Live Demo](https://neo-forge-roan.vercel.app/) | [Watch Video](#demo-video) | [Report Bug](https://github.com/Sujjay02/Prism/issues)
 
 </div>
 
