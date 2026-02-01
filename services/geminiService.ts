@@ -22,48 +22,63 @@ If the user specifically asks for "Python", "script", "math calculation", "numpy
   - INTERACTIVITY: Create standard HTML inputs (sliders, buttons) using \`document.createElement\`, attach event listeners using \`create_proxy\`, and append them to "plot-root".
   
 MODE 2: REACT / 3D / COMPONENT REQUESTS
-If the user asks for "React Component", "Visualizer", "Three.js", "React Three Fiber", "R3F", "3D", "WebGL", "Shader", "Physics", "Effects", "Wireframe", "Mesh", "Geometry", "Torus", "Sphere", "Cube", "rotating", or "orbit":
+If the user asks for "React Component", "Visualizer", "Three.js", "React Three Fiber", "R3F", "3D", "WebGL", "Shader", "Physics", "Effects", "Wireframe", "Mesh", "Geometry", "Torus", "Sphere", "Cube", "rotating", "orbit", "simulation", "particles", or "animation":
 - You MUST generate a COMPLETE, WORKING, self-contained HTML file with actual component code (not placeholders).
 - Use Babel Standalone for JSX transformation.
-- CRITICAL: Use the exact import map below. The 'external' flags prevent duplicate React/Three instances.
+- CRITICAL: Use the exact import map below. These versions are tested to work together.
 
 REQUIRED HTML STRUCTURE:
-1. Head section with: Tailwind CSS (with crossorigin="anonymous"), import map (copy exactly), Babel standalone (with crossorigin="anonymous"), and styles
+1. Head section with: Tailwind CSS, import map (copy exactly), Babel standalone, and styles
 2. Body with: <div id="root"></div> and a <script type="text/babel" data-type="module">
 3. Inside the script: imports, your ACTUAL component code, App wrapper, and ReactDOM render
-4. CRITICAL: All external scripts MUST have crossorigin="anonymous" attribute:
-   <script src="https://cdn.tailwindcss.com" crossorigin="anonymous"></script>
-   <script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"></script>
+4. CRITICAL: All external scripts MUST have crossorigin="anonymous" attribute
 
-IMPORT MAP (copy exactly):
+IMPORT MAP (copy EXACTLY - these versions are tested and work together):
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "react-dom": "https://esm.sh/react-dom@18.2.0?external=react",
-    "three": "https://esm.sh/three@0.160.0",
-    "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.15.12?external=react,react-dom,three",
-    "@react-three/drei": "https://esm.sh/@react-three/drei@9.96.1?external=react,react-dom,three,@react-three/fiber",
-    "@react-three/cannon": "https://esm.sh/@react-three/cannon@6.6.0?external=react,react-dom,three,@react-three/fiber",
-    "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.0?external=react,react-dom,three,@react-three/fiber",
-    "postprocessing": "https://esm.sh/postprocessing@6.34.1?external=three",
-    "leva": "https://esm.sh/leva@0.9.35?external=react,react-dom",
-    "lucide-react": "https://esm.sh/lucide-react@0.263.1?external=react,react-dom",
-    "uuid": "https://esm.sh/uuid@9.0.1"
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "three": "https://esm.sh/three@0.162.0",
+    "three/examples/jsm/controls/OrbitControls": "https://esm.sh/three@0.162.0/examples/jsm/controls/OrbitControls",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.16.1?external=react,react-dom,three",
+    "@react-three/drei": "https://esm.sh/@react-three/drei@9.102.2?external=react,react-dom,three,@react-three/fiber",
+    "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.2?external=react,react-dom,three,@react-three/fiber",
+    "postprocessing": "https://esm.sh/postprocessing@6.35.2?external=three",
+    "maath": "https://esm.sh/maath@0.10.7?external=three",
+    "leva": "https://esm.sh/leva@0.9.35?external=react,react-dom"
   }
 }
 </script>
 
 REQUIRED IMPORTS (at top of script):
-import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as THREE from 'three';
 import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
-import { OrbitControls, Text, Html, PerspectiveCamera, Environment, Float, Stars, Trail, Sparkles } from '@react-three/drei';
-// Add physics imports only if needed: import { Physics, useBox, usePlane, useSphere } from '@react-three/cannon';
-// Add effects imports only if needed: import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { OrbitControls, Text, Html, Environment, Float, Stars, Trail, Sparkles, MeshWobbleMaterial, MeshDistortMaterial, GradientTexture, Center, useTexture } from '@react-three/drei';
+// Add effects imports only if needed: import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
 // Add leva imports only if needed: import { useControls } from 'leva';
+// Add maath for math utilities: import { randFloat, randFloatSpread } from 'maath/random';
+
+CRITICAL 3D CODING RULES:
+1. ALWAYS check refs before using: if (meshRef.current) { meshRef.current.rotation.x += delta; }
+2. ALWAYS use useCallback for event handlers passed to components
+3. NEVER use document.getElementById inside React components - use refs
+4. ALWAYS provide a visible fallback for Suspense: <Suspense fallback={<LoadingFallback />}>
+5. For useFrame, ALWAYS destructure state: useFrame((state) => { const { clock } = state; ... })
+6. Canvas MUST have explicit width/height on parent container
+7. NEVER access .current directly in render - only in useFrame or useEffect
+
+LOADING FALLBACK COMPONENT (always include this):
+function Loader() {
+  return (
+    <Html center>
+      <div style={{ color: 'white', fontSize: '14px' }}>Loading 3D Scene...</div>
+    </Html>
+  );
+}
 
 COMPONENT STRUCTURE RULES:
 - Define your 3D scene component(s) that use useFrame, meshes, lights, etc.
@@ -74,61 +89,275 @@ COMPONENT STRUCTURE RULES:
 - For glowing/pulsing effects: use useFrame to animate material properties like emissiveIntensity or opacity over time with Math.sin(state.clock.elapsedTime).
 - End with: const root = createRoot(document.getElementById('root')); root.render(<App />);
 
-EXAMPLE STRUCTURE (for a rotating cube):
+WORKING EXAMPLE (for a rotating cube with glow):
+// Loading fallback
+function Loader() {
+  return (
+    <Html center>
+      <div style={{ color: 'white', fontSize: '14px' }}>Loading...</div>
+    </Html>
+  );
+}
+
 // Scene component - contains 3D objects
 function RotatingCube() {
   const meshRef = useRef();
-  useFrame((state, delta) => {
-    meshRef.current.rotation.x += delta;
-    meshRef.current.rotation.y += delta * 0.5;
+
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x = state.clock.elapsedTime * 0.5;
+      meshRef.current.rotation.y = state.clock.elapsedTime * 0.3;
+    }
   });
+
   return (
-    <mesh ref={meshRef}>
+    <mesh ref={meshRef} castShadow>
       <boxGeometry args={[2, 2, 2]} />
-      <meshStandardMaterial color="hotpink" />
+      <meshStandardMaterial
+        color="#ff6b9d"
+        emissive="#ff6b9d"
+        emissiveIntensity={0.2}
+        metalness={0.3}
+        roughness={0.4}
+      />
     </mesh>
   );
 }
 
 // App wrapper with Canvas
-const App = () => (
-  <div className="w-full h-full bg-black">
-    <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
-      <color attach="background" args={['#101010']} />
-      <Suspense fallback={null}>
-        <RotatingCube />
-        <Environment preset="city" />
-      </Suspense>
-      <OrbitControls makeDefault />
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
-    </Canvas>
-  </div>
-);
+function App() {
+  return (
+    <div style={{ width: '100vw', height: '100vh', background: '#000' }}>
+      <Canvas
+        camera={{ position: [0, 0, 8], fov: 50 }}
+        gl={{ antialias: true, alpha: false }}
+        dpr={[1, 2]}
+      >
+        <color attach="background" args={['#0a0a0a']} />
+        <fog attach="fog" args={['#0a0a0a', 5, 20]} />
+
+        <Suspense fallback={<Loader />}>
+          <RotatingCube />
+        </Suspense>
+
+        <ambientLight intensity={0.4} />
+        <pointLight position={[10, 10, 10]} intensity={1} castShadow />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#4060ff" />
+
+        <OrbitControls
+          enableDamping
+          dampingFactor={0.05}
+          minDistance={3}
+          maxDistance={20}
+        />
+      </Canvas>
+    </div>
+  );
+}
 
 const root = createRoot(document.getElementById('root'));
 root.render(<App />);
 
+PHYSICS SIMULATIONS (IMPORTANT - DO NOT USE @react-three/cannon):
+For physics simulations (gravity, collisions, falling objects, bouncing), implement CUSTOM PHYSICS using useFrame:
+
+function PhysicsObject({ position: initialPos }) {
+  const meshRef = useRef();
+  const velocity = useRef(new THREE.Vector3(0, 0, 0));
+  const position = useRef(new THREE.Vector3(...initialPos));
+  const gravity = -9.8;
+  const bounceFactor = 0.7;
+  const groundY = -3;
+
+  useFrame((state, delta) => {
+    if (!meshRef.current) return;
+
+    // Apply gravity
+    velocity.current.y += gravity * delta;
+
+    // Update position
+    position.current.add(velocity.current.clone().multiplyScalar(delta));
+
+    // Ground collision
+    if (position.current.y < groundY) {
+      position.current.y = groundY;
+      velocity.current.y = -velocity.current.y * bounceFactor;
+    }
+
+    // Apply to mesh
+    meshRef.current.position.copy(position.current);
+  });
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[0.5, 32, 32]} />
+      <meshStandardMaterial color="orange" />
+    </mesh>
+  );
+}
+
+// For particle systems with physics:
+function ParticleSystem({ count = 100 }) {
+  const meshRef = useRef();
+  const particles = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < count; i++) {
+      temp.push({
+        position: new THREE.Vector3(
+          (Math.random() - 0.5) * 10,
+          Math.random() * 10,
+          (Math.random() - 0.5) * 10
+        ),
+        velocity: new THREE.Vector3(
+          (Math.random() - 0.5) * 2,
+          Math.random() * 2,
+          (Math.random() - 0.5) * 2
+        ),
+        scale: Math.random() * 0.5 + 0.1
+      });
+    }
+    return temp;
+  }, [count]);
+
+  useFrame((state, delta) => {
+    if (!meshRef.current) return;
+    const positions = meshRef.current.geometry.attributes.position.array;
+
+    particles.forEach((particle, i) => {
+      // Apply physics
+      particle.velocity.y -= 9.8 * delta;
+      particle.position.add(particle.velocity.clone().multiplyScalar(delta));
+
+      // Respawn at top if below ground
+      if (particle.position.y < -5) {
+        particle.position.y = 10;
+        particle.velocity.y = 0;
+      }
+
+      // Update geometry
+      positions[i * 3] = particle.position.x;
+      positions[i * 3 + 1] = particle.position.y;
+      positions[i * 3 + 2] = particle.position.z;
+    });
+
+    meshRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+
+  return (
+    <points ref={meshRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={new Float32Array(count * 3)}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial size={0.1} color="#ffffff" sizeAttenuation />
+    </points>
+  );
+}
+
+BLOOM AND GLOW EFFECTS:
+import { EffectComposer, Bloom } from '@react-three/postprocessing';
+
+// Wrap your scene content:
+<EffectComposer>
+  <Bloom
+    intensity={1.5}
+    luminanceThreshold={0.1}
+    luminanceSmoothing={0.9}
+    mipmapBlur
+  />
+</EffectComposer>
+
+// For glowing objects, use emissive materials:
+<meshStandardMaterial
+  color="#00ffff"
+  emissive="#00ffff"
+  emissiveIntensity={2}
+  toneMapped={false}
+/>
+
+ANIMATED MATERIALS:
+function AnimatedSphere() {
+  const meshRef = useRef();
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    // Pulsing glow effect
+    meshRef.current.material.emissiveIntensity =
+      0.5 + Math.sin(state.clock.elapsedTime * 2) * 0.5;
+    // Color shifting
+    meshRef.current.material.color.setHSL(
+      (state.clock.elapsedTime * 0.1) % 1,
+      0.8,
+      0.5
+    );
+  });
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[1, 64, 64]} />
+      <meshStandardMaterial
+        color="#ff0066"
+        emissive="#ff0066"
+        emissiveIntensity={0.5}
+      />
+    </mesh>
+  );
+}
+
+INTERACTIVE 3D (mouse/click):
+function InteractiveCube() {
+  const meshRef = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    meshRef.current.rotation.y = state.clock.elapsedTime;
+    meshRef.current.scale.setScalar(clicked ? 1.5 : hovered ? 1.2 : 1);
+  });
+
+  return (
+    <mesh
+      ref={meshRef}
+      onClick={() => setClicked(!clicked)}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? '#ff6b6b' : '#4ecdc4'} />
+    </mesh>
+  );
+}
+
 CAPABILITIES & FEATURES:
-- If the user asks for "physics", "gravity", "falling", "collisions", or "simulation":
-  - Use <Physics> from @react-three/cannon wrapping the scene.
-  - Use hooks like useBox, useSphere, usePlane for bodies.
+- If the user asks for "physics", "gravity", "falling", "collisions", or "bouncing":
+  - Implement CUSTOM PHYSICS using useFrame as shown above (DO NOT use @react-three/cannon)
+  - Track velocity and position in useRef
+  - Apply gravity: velocity.y += gravity * delta
+  - Handle collisions manually with bounds checking
 - If the user asks for "bloom", "glow", "glowing", "neon", "pulsing", "post-processing", or "effects":
-  - Use <EffectComposer> with <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />.
-  - For glowing wireframes: combine wireframe material with emissive color and wrap Canvas contents in EffectComposer.
-  - For pulsing glow: animate emissiveIntensity in useFrame using Math.sin(clock.elapsedTime * speed).
-- If the user asks for "sky", "stars", or "environment":
-  - Use <Stars />, <Environment preset="city" /> from @react-three/drei.
+  - Use <EffectComposer> with <Bloom intensity={1.5} luminanceThreshold={0.1} mipmapBlur />
+  - For glowing objects: use emissive materials with emissiveIntensity > 1 and toneMapped={false}
+  - For pulsing glow: animate emissiveIntensity in useFrame using Math.sin(clock.elapsedTime * speed)
+- If the user asks for "sky", "stars", "space", or "environment":
+  - Use <Stars radius={100} depth={50} count={5000} factor={4} fade speed={1} /> from drei
+  - Or use <Environment preset="night" /> for realistic lighting
+- If the user asks for "particles", "snow", "rain", "confetti":
+  - Use <Sparkles count={100} speed={0.4} size={2} /> from drei
+  - Or create custom particle systems with Points and BufferGeometry
 - If the user asks for "sliders", "controls", "parameters", or "toggles" in a 3D context:
-  - Use \`useControls\` from "leva". 
-  - Example: \`const { radius, color } = useControls({ radius: { value: 1, min: 0.1, max: 2 }, color: '#fff' })\`.
-  - Leva renders a UI panel automatically. Do not create HTML controls manually unless specifically requested.
-- If the user asks for "vectors", "arrows", "Visualizer3D", or "field":
-  - Create a \`VectorArrow\` component using primitives (cylinder + cone) or \`<arrowHelper />\`.
-  - NOTE: \`<arrowHelper />\` arguments in R3F are \`args={[dir, origin, length, color, headLength, headWidth]}\`.
-  - Scale arrow length by magnitude.
-  - Color arrows based on magnitude (e.g., Low=Blue, High=Red).
-  - Use \`OrbitControls\` to allow rotation.
+  - Use \`useControls\` from "leva".
+  - Example: \`const { radius, color } = useControls({ radius: { value: 1, min: 0.1, max: 2 }, color: '#fff' })\`
+- If the user asks for "waves", "water", "ocean", "ripples":
+  - Use MeshDistortMaterial or create custom vertex displacement in useFrame
+  - Animate positions of vertices for wave effects
+- If the user asks for "orbit", "planets", "solar system":
+  - Use nested groups with rotation in useFrame for orbital motion
+  - group.current.rotation.y += delta * orbitSpeed
 
 MODE 3: STANDARD HTML UI (Default)
 For all other requests (landing pages, forms, dashboards):
