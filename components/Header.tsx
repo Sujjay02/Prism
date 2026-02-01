@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ isDark, toggleTheme, onReset }) 
           <Layers className="text-white w-5 h-5" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-blue-500 transition-colors">
-          Neo<span className="text-blue-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">Forge</span>
+          Pr<span className="text-blue-500 group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">ism</span>
         </h1>
       </div>
       <div className="flex items-center space-x-4">

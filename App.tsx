@@ -15,6 +15,7 @@ import { ShareDialog } from './components/ShareDialog';
 import { CodeExplanation } from './components/CodeExplanation';
 import { GeneratingAnimation } from './components/GeneratingAnimation';
 import { VoiceCommandShowcase } from './components/VoiceCommandShowcase';
+import { VoiceMode } from './components/VoiceMode';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -42,6 +43,7 @@ const App: React.FC = () => {
   const [showAssetManager, setShowAssetManager] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showVoiceMode, setShowVoiceMode] = useState(false);
   const [assets, setAssets] = useState<UploadedFile[]>([]);
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
@@ -398,6 +400,7 @@ const App: React.FC = () => {
           onSelect={handleSelectHistory}
           onDelete={handleDeleteHistory}
           onNewChat={handleReset}
+          onVoiceMode={() => setShowVoiceMode(true)}
           currentId={currentHistoryId}
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
@@ -407,13 +410,13 @@ const App: React.FC = () => {
           <div className="flex-1 flex flex-col overflow-hidden w-full px-4 pt-4 pb-24 max-w-7xl mx-auto">
 
             {!result && !loading && !error && (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-in fade-in duration-500">
-                <div className="space-y-4">
+              <div className="flex flex-col items-center pt-8 pb-16 h-full text-center space-y-8 animate-in fade-in duration-500 overflow-y-auto">
+                <div className="space-y-4 shrink-0">
                   <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xl shadow-blue-500/20">
                     <Sparkles className="w-10 h-10 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Ready to Forge</h2>
+                    <h2 className="text-3xl font-bold text-zinc-800 dark:text-zinc-100 tracking-tight">Ready to Create</h2>
                     <p className="text-zinc-500 dark:text-zinc-400 max-w-md mx-auto mt-2 text-lg">
                       What will you build today?
                     </p>
@@ -763,6 +766,19 @@ const App: React.FC = () => {
             setPrompt(`${suggestion}: ${result.explanation}`);
           }}
         />
+      )}
+
+      {showVoiceMode && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <VoiceMode
+            onTranscript={(text) => {
+              setShowVoiceMode(false);
+              setPrompt(text);
+              handleGenerate(text);
+            }}
+            onClose={() => setShowVoiceMode(false)}
+          />
+        </div>
       )}
     </div>
   );

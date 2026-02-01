@@ -73,6 +73,7 @@ export interface HistorySidebarProps {
   onSelect: (item: HistoryItem) => void;
   onDelete: (id: string) => void;
   onNewChat: () => void;
+  onVoiceMode?: () => void;
   currentId?: string;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;

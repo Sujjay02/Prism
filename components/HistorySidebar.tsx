@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { History, ChevronLeft, ChevronRight, MessageSquare, Clock, Paperclip, Trash2, X, Check, Plus, Search, FileText, Image as ImageIcon, Rocket, Smartphone } from 'lucide-react';
+import { History, ChevronLeft, ChevronRight, MessageSquare, Clock, Paperclip, Trash2, X, Check, Plus, Search, FileText, Image as ImageIcon, Rocket, Smartphone, Mic } from 'lucide-react';
 import { HistorySidebarProps } from '../types';
 
-export const HistorySidebar: React.FC<HistorySidebarProps> = ({ 
-  history, 
-  onSelect, 
+export const HistorySidebar: React.FC<HistorySidebarProps> = ({
+  history,
+  onSelect,
   onDelete,
   onNewChat,
-  currentId, 
-  isOpen, 
-  setIsOpen 
+  onVoiceMode,
+  currentId,
+  isOpen,
+  setIsOpen
 }) => {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,14 +79,25 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </button>
         </div>
 
-        <button 
+        <button
           onClick={onNewChat}
           className="w-full flex items-center justify-center space-x-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 py-2 px-4 rounded-lg text-sm font-medium transition-colors shadow-sm"
         >
           <Plus className="w-4 h-4" />
           <span>New Chat</span>
         </button>
-        
+
+        {/* Voice Mode Button */}
+        {onVoiceMode && (
+          <button
+            onClick={onVoiceMode}
+            className="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-all shadow-sm"
+          >
+            <Mic className="w-4 h-4" />
+            <span>Voice Mode</span>
+          </button>
+        )}
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
