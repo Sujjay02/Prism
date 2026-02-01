@@ -1,6 +1,6 @@
 {
-  "name": "NeoForge UI",
-  "description": "An AI-powered interface generator that creates modern, single-file HTML/CSS/JS UI components on demand.",
+  "name": "Prism",
+  "description": "AI-powered universal code generator. Transform prompts into React, 3D WebGL, Python, and HTML - instantly.",
   "requestFramePermissions": [
     "microphone"
   ]

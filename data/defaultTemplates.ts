@@ -1,7 +1,7 @@
 import { SavedTemplate } from '../types';
 
 /**
- * Default templates that come pre-installed with NeoForge
+ * Default templates that come pre-installed with Prism
  */
 export const DEFAULT_TEMPLATES: SavedTemplate[] = [
   // ============ DASHBOARDS ============

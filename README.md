@@ -1,17 +1,17 @@
 <div align="center">
-<img width="1200" height="475" alt="NeoForge Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img width="1200" height="475" alt="Prism Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 
-# NeoForge
+# Prism
 
 ### AI-Powered Universal Code Generator
 
-**Transform ideas into functional code instantly using Gemini 3**
+**One prompt. Infinite possibilities. Powered by Gemini 3.**
 
 [![Gemini 3](https://img.shields.io/badge/Powered%20by-Gemini%203-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[Live Demo](https://aistudio.google.com/app/prompts/1DByJVjJOVgokvZ_JKh1sa1GO54LXBtJb) | [Watch Video](#demo-video) | [Report Bug](https://github.com/yourusername/neoforge/issues)
+[Live Demo](https://aistudio.google.com/app/prompts/1DByJVjJOVgokvZ_JKh1sa1GO54LXBtJb) | [Watch Video](#demo-video) | [Report Bug](https://github.com/yourusername/prism/issues)
 
 </div>
 
@@ -31,25 +31,25 @@ Developers and designers face a critical bottleneck: **turning ideas into workin
 
 ---
 
-## The Solution: NeoForge
+## The Solution: Prism
 
-NeoForge is an **AI-powered universal code generator** that transforms natural language, images, and voice into production-ready code in seconds.
+Prism is an **AI-powered universal code generator** that transforms natural language, images, and voice into production-ready code in seconds.
 
-**One prompt. Any output.** Whether you need a React dashboard, a 3D WebGL visualization, a Python data app, or a landing page - NeoForge generates it instantly.
+**One prompt. Any output.** Like light through a prism, your single idea refracts into React dashboards, 3D WebGL visualizations, Python data apps, or landing pages - instantly.
 
-### What Makes NeoForge Different?
+### What Makes Prism Different?
 
-| Feature | v0.dev | Bolt.new | **NeoForge** |
-|---------|--------|----------|--------------|
-| React/HTML Generation | ✅ | ✅ | ✅ |
-| 3D/WebGL Generation | ❌ | ❌ | ✅ **React Three Fiber** |
-| Python + Visualization | ❌ | ❌ | ✅ **Pyodide Runtime** |
-| Voice Input | ❌ | ❌ | ✅ |
-| Image-to-UI | ✅ | ✅ | ✅ |
-| Live Code Editor | ❌ | ✅ | ✅ **Monaco** |
-| Real-time Preview | ✅ | ✅ | ✅ |
-| Export to GitHub | ❌ | ❌ | ✅ |
-| Offline Templates | ❌ | ❌ | ✅ **10+ built-in** |
+| Feature | v0.dev | Bolt.new | **Prism** |
+|---------|--------|----------|-----------|
+| React/HTML Generation | Yes | Yes | Yes |
+| 3D/WebGL Generation | No | No | **React Three Fiber** |
+| Python + Visualization | No | No | **Pyodide Runtime** |
+| Voice Input | No | No | Yes |
+| Image-to-UI | Yes | Yes | Yes |
+| AI Code Explanation | No | No | **Gemini 3** |
+| Live Code Editor | No | Yes | **Monaco** |
+| Export to GitHub | No | No | Yes |
+| Offline Templates | No | No | **15+ built-in** |
 
 ---
 
@@ -129,7 +129,7 @@ Landing pages, forms, and static sites with modern design.
 
 ## How We Use Gemini 3
 
-NeoForge leverages **Gemini 3's advanced capabilities** for intelligent code generation:
+Prism leverages **Gemini 3's advanced capabilities** for intelligent code generation:
 
 ### Gemini 3 Pro Preview (`gemini-3-pro-preview`)
 - **Multi-modal Understanding**: Processes text, images, and audio in a single request
@@ -139,7 +139,8 @@ NeoForge leverages **Gemini 3's advanced capabilities** for intelligent code gen
 
 ### Gemini 3 Flash Preview (`gemini-3-flash-preview`)
 - **Audio Transcription**: Converts voice commands to text with high accuracy
-- **Low Latency**: Fast response for real-time voice input
+- **Code Explanation**: Analyzes generated code and explains how it works
+- **Improvement Suggestions**: Recommends enhancements for generated code
 
 ### Key Integration Points
 
@@ -149,25 +150,21 @@ const response = await ai.models.generateContent({
   model: 'gemini-3-pro-preview',
   contents: {
     parts: [
-      { inlineData: { mimeType: 'image/png', data: imageBase64 } },  // Image
-      { text: 'Convert this wireframe to a React component' }        // Prompt
+      { inlineData: { mimeType: 'image/png', data: imageBase64 } },
+      { text: 'Convert this wireframe to a React component' }
     ]
   },
   config: {
-    systemInstruction: SYSTEM_INSTRUCTION,  // Mode detection & code structure
-    tools: [{ googleSearch: {} }]           // Real-time API grounding
+    systemInstruction: SYSTEM_INSTRUCTION,
+    tools: [{ googleSearch: {} }]
   }
 });
 
-// Voice-to-text transcription
-const transcription = await ai.models.generateContent({
+// AI-powered code explanation
+const explanation = await ai.models.generateContent({
   model: 'gemini-3-flash-preview',
-  contents: {
-    parts: [
-      { inlineData: { mimeType: 'audio/webm', data: audioBase64 } },
-      { text: 'Transcribe the following audio exactly as spoken.' }
-    ]
-  }
+  contents: { parts: [{ text: `Explain this code: ${code}` }] },
+  config: { responseMimeType: 'application/json' }
 });
 ```
 
@@ -183,7 +180,7 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│                              NEOFORGE ARCHITECTURE                         │
+│                              PRISM ARCHITECTURE                            │
 ├────────────────────────────────────────────────────────────────────────────┤
 │                                                                            │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
@@ -196,10 +193,10 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘    │  │
 │  │                                                                      │  │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │  │
-│  │  │  Template   │ │   Diff      │ │   Asset     │ │   Share     │    │  │
-│  │  │  Gallery    │ │   Viewer    │ │   Manager   │ │   Dialog    │    │  │
-│  │  │ (10+ built- │ │  (Version   │ │  (Images/   │ │  (URL-based │    │  │
-│  │  │  in + user) │ │   compare)  │ │   3D files) │ │   sharing)  │    │  │
+│  │  │  Template   │ │   AI Code   │ │   Asset     │ │   Share     │    │  │
+│  │  │  Gallery    │ │   Explain   │ │   Manager   │ │   Dialog    │    │  │
+│  │  │ (15+ built- │ │  (Gemini 3  │ │  (Images/   │ │  (URL-based │    │  │
+│  │  │  in + user) │ │   powered)  │ │   3D files) │ │   sharing)  │    │  │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘    │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                      │                                     │
@@ -209,9 +206,9 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 │  │  ┌─────────────────────────────────────────────────────────────────┐ │  │
 │  │  │                    geminiService.ts                             │ │  │
 │  │  │  • generateUI() - Multi-modal code generation                   │ │  │
+│  │  │  • explainCode() - AI code explanation                         │ │  │
+│  │  │  • suggestImprovements() - AI enhancement ideas                │ │  │
 │  │  │  • transcribeAudio() - Voice-to-text                           │ │  │
-│  │  │  • Retry logic with exponential backoff                        │ │  │
-│  │  │  • JSON response parsing & validation                          │ │  │
 │  │  └─────────────────────────────────────────────────────────────────┘ │  │
 │  │  ┌─────────────────────┐ ┌─────────────────────┐                    │  │
 │  │  │   storageService    │ │   githubService     │                    │  │
@@ -225,8 +222,8 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 │  │  ┌──────────────────────┐    ┌──────────────────────┐               │  │
 │  │  │ gemini-3-pro-preview │    │ gemini-3-flash-preview│               │  │
 │  │  │ • Vision Analysis    │    │ • Audio Transcription │               │  │
-│  │  │ • Code Generation    │    │ • Fast Inference      │               │  │
-│  │  │ • Search Grounding   │    │                       │               │  │
+│  │  │ • Code Generation    │    │ • Code Explanation    │               │  │
+│  │  │ • Search Grounding   │    │ • Fast Inference      │               │  │
 │  │  └──────────────────────┘    └──────────────────────┘               │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                            │
@@ -260,9 +257,9 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 
 | Prompt | Output |
 |--------|--------|
-| "Create a 3D torus knot with metallic material and orbit controls" | Interactive WebGL scene |
+| "Create a 3D torus knot with neon glow effect" | Interactive WebGL scene with bloom |
 | "Build a Kanban board with drag and drop" | React component with state |
-| "Monte Carlo simulation of Pi with visualization" | Python + matplotlib chart |
+| "Monte Carlo simulation of Pi" | Python + matplotlib chart |
 | "Convert this wireframe to a dashboard" + image | Pixel-perfect UI |
 
 ---
@@ -277,8 +274,8 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/neoforge.git
-cd neoforge
+git clone https://github.com/yourusername/prism.git
+cd prism
 
 # Install dependencies
 npm install
@@ -296,7 +293,8 @@ npm run dev
 2. **Voice Input**: Click the microphone icon and speak your idea
 3. **Image Upload**: Drag and drop a wireframe or screenshot
 4. **Iterate**: Refine your generation with follow-up prompts
-5. **Export**: Download as HTML, React component, or push to GitHub
+5. **Explain**: Click the purple "Explain" button to understand the code
+6. **Export**: Download as HTML, React component, or push to GitHub
 
 ---
 
@@ -316,11 +314,14 @@ npm run dev
 ## Project Structure
 
 ```
-neoforge/
+prism/
 ├── components/           # React components
 │   ├── InputArea.tsx     # Text, voice, image input
 │   ├── CodePreview.tsx   # Sandboxed iframe preview
 │   ├── LiveEditor.tsx    # Monaco code editor
+│   ├── CodeExplanation.tsx # AI-powered explanation
+│   ├── GeneratingAnimation.tsx # Loading animation
+│   ├── VoiceCommandShowcase.tsx # Voice examples
 │   ├── TemplateGallery.tsx # Built-in templates
 │   └── ...
 ├── services/
@@ -334,7 +335,7 @@ neoforge/
 │   ├── diffUtils.ts      # Version comparison
 │   └── urlUtils.ts       # URL sharing
 ├── data/
-│   └── defaultTemplates.ts # 10+ built-in templates
+│   └── defaultTemplates.ts # 15+ built-in templates
 └── App.tsx               # Main application
 ```
 
@@ -356,6 +357,6 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 **Built with Gemini 3 for the Google AI Hackathon 2025**
 
-Made with code and creativity
+*Like light through a prism, one prompt becomes infinite possibilities.*
 
 </div>

@@ -26,7 +26,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ code, explanation, onC
   };
 
   const shareOnTwitter = () => {
-    const text = `Check out this UI I built with NeoForge: ${explanation}`;
+    const text = `Check out this UI I built with Prism AI: ${explanation}`;
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(twitterUrl, '_blank');
   };

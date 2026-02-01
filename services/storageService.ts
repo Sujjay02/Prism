@@ -1,8 +1,8 @@
 import { get, set, del } from 'idb-keyval';
 import { SavedTemplate, HistoryItem } from '../types';
 
-const TEMPLATES_KEY = 'neoforge-templates';
-const HISTORY_KEY = 'neoforge-history';
+const TEMPLATES_KEY = 'prism-templates';
+const HISTORY_KEY = 'prism-history';
 
 /**
  * Template Storage

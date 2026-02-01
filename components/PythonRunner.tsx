@@ -460,11 +460,11 @@ from js import document, window
 import sys
 
 # Global variable to hold the last figure for export
-_neoforge_last_fig = None
+_prism_last_fig = None
 
 def custom_show():
-    global _neoforge_last_fig
-    _neoforge_last_fig = plt.gcf()
+    global _prism_last_fig
+    _prism_last_fig = plt.gcf()
     
     target = document.getElementById("plot-root")
     if not target:
@@ -472,7 +472,7 @@ def custom_show():
     
     buf = io.BytesIO()
     # Save as transparent PNG for display
-    _neoforge_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
+    _prism_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
     buf.seek(0)
     img_str = base64.b64encode(buf.read()).decode('utf-8')
     
@@ -485,28 +485,28 @@ def custom_show():
     img.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
     
     target.appendChild(img)
-    # Close the figure in pyplot to free memory and state, but _neoforge_last_fig keeps the object alive
-    plt.close(_neoforge_last_fig)
+    # Close the figure in pyplot to free memory and state, but _prism_last_fig keeps the object alive
+    plt.close(_prism_last_fig)
 
 def export_last_plot(fmt):
-    global _neoforge_last_fig
-    if _neoforge_last_fig is None:
+    global _prism_last_fig
+    if _prism_last_fig is None:
         return None
     
     buf = io.BytesIO()
     mime = "image/png"
     
     if fmt == 'jpg' or fmt == 'jpeg':
-        _neoforge_last_fig.savefig(buf, format='jpg', bbox_inches='tight', facecolor='white')
+        _prism_last_fig.savefig(buf, format='jpg', bbox_inches='tight', facecolor='white')
         mime = "image/jpeg"
     elif fmt == 'svg':
-        _neoforge_last_fig.savefig(buf, format='svg', bbox_inches='tight')
+        _prism_last_fig.savefig(buf, format='svg', bbox_inches='tight')
         mime = "image/svg+xml"
     elif fmt == 'pdf':
-        _neoforge_last_fig.savefig(buf, format='pdf', bbox_inches='tight')
+        _prism_last_fig.savefig(buf, format='pdf', bbox_inches='tight')
         mime = "application/pdf"
     else:
-        _neoforge_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
+        _prism_last_fig.savefig(buf, format='png', bbox_inches='tight', transparent=True)
         
     buf.seek(0)
     b64 = base64.b64encode(buf.read()).decode('utf-8')
@@ -520,12 +520,12 @@ try:
     import plotly.graph_objects as go
     import plotly.io as pio
 
-    def _neoforge_plotly_show(fig, *args, **kwargs):
+    def _prism_plotly_show(fig, *args, **kwargs):
         json_str = fig.to_json()
         window.renderPlotly(json_str)
 
     # Patch Figure.show
-    go.Figure.show = _neoforge_plotly_show
+    go.Figure.show = _prism_plotly_show
     # Set default renderer to None to avoid browser open attempts
     pio.renderers.default = None
 except ImportError:

@@ -24,14 +24,14 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
     `<script>
       window.onerror = function(msg, url, line, col, error) {
         window.parent.postMessage({
-          type: 'NEOFORGE_IFRAME_ERROR',
+          type: 'PRISM_IFRAME_ERROR',
           error: msg + (line ? ' (line ' + line + ')' : '')
         }, '*');
         return true;
       };
       window.addEventListener('unhandledrejection', function(e) {
         window.parent.postMessage({
-          type: 'NEOFORGE_IFRAME_ERROR',
+          type: 'PRISM_IFRAME_ERROR',
           error: 'Unhandled Promise Rejection: ' + (e.reason?.message || e.reason || 'Unknown error')
         }, '*');
       });
@@ -40,7 +40,7 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'NEOFORGE_IFRAME_ERROR') {
+      if (e.data?.type === 'PRISM_IFRAME_ERROR') {
         setRuntimeError(e.data.error);
       }
     };

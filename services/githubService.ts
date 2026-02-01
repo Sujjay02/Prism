@@ -8,8 +8,8 @@ const GITHUB_REDIRECT_URI = `${window.location.origin}/github-callback`;
 const GITHUB_SCOPE = 'repo';
 
 // Storage keys
-const GITHUB_TOKEN_KEY = 'neoforge-github-token';
-const GITHUB_USER_KEY = 'neoforge-github-user';
+const GITHUB_TOKEN_KEY = 'prism-github-token';
+const GITHUB_USER_KEY = 'prism-github-user';
 
 export interface GitHubUser {
   login: string;
@@ -315,7 +315,7 @@ export async function pushToRepo(
     repo,
     'index.html',
     code,
-    `Update: ${explanation}\n\nGenerated with NeoForge`,
+    `Update: ${explanation}\n\nGenerated with Prism`,
     branch
   );
 

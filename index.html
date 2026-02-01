@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NeoForge UI</title>
+    <title>Prism - AI Code Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -23,7 +23,7 @@
     <script>
       (function() {
         try {
-          const savedTheme = localStorage.getItem('neoforge-theme');
+          const savedTheme = localStorage.getItem('prism-theme');
           const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
             document.documentElement.classList.add('dark');

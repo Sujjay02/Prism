@@ -88,7 +88,7 @@ export async function createCodeSandboxLink(code: string): Promise<string> {
     'package.json': {
       content: JSON.stringify(
         {
-          name: 'neoforge-export',
+          name: 'prism-export',
           version: '1.0.0',
           main: 'index.html',
           dependencies: {},

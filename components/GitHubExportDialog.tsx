@@ -34,7 +34,7 @@ export const GitHubExportDialog: React.FC<GitHubExportDialogProps> = ({
 
   // New repo form
   const [newRepoName, setNewRepoName] = useState(() =>
-    explanation.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 50) || 'neoforge-project'
+    explanation.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 50) || 'prism-project'
   );
   const [newRepoDescription, setNewRepoDescription] = useState(explanation);
   const [newRepoPrivate, setNewRepoPrivate] = useState(false);
@@ -235,7 +235,7 @@ export const GitHubExportDialog: React.FC<GitHubExportDialogProps> = ({
               <p className="text-xs text-zinc-500 text-center">
                 Need a token?{' '}
                 <a
-                  href="https://github.com/settings/tokens/new?description=NeoForge&scopes=repo"
+                  href="https://github.com/settings/tokens/new?description=Prism&scopes=repo"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:text-blue-600"

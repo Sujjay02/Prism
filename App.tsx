@@ -48,7 +48,7 @@ const App: React.FC = () => {
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('neoforge-theme');
+    const saved = localStorage.getItem('prism-theme');
     if (saved) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
@@ -157,10 +157,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('neoforge-theme', 'dark');
+      localStorage.setItem('prism-theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('neoforge-theme', 'light');
+      localStorage.setItem('prism-theme', 'light');
     }
   }, [isDark]);
 
