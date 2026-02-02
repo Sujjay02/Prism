@@ -3,7 +3,8 @@ import {
   X, HelpCircle, Keyboard, Eye, Code2, Terminal, Edit3, GitCompare,
   Smartphone, Tablet, Monitor, Maximize2, Download, Share2, Layers,
   Wand2, Mic, Sparkles, Image, Upload, Search, MessageSquare, Rocket,
-  ChevronRight, Command, CornerDownLeft, Palette
+  ChevronRight, Command, CornerDownLeft, Palette, Shield, FileCode,
+  QrCode, MessageSquareCode, Shuffle, Undo2, Redo2, GraduationCap
 } from 'lucide-react';
 
 interface HelpDialogProps {
@@ -212,6 +213,8 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ isOpen, onClose }) => {
                     { keys: ['⌘/Ctrl', '3'], action: 'Switch to Editor' },
                     { keys: ['⌘/Ctrl', 'E'], action: 'Open Export dialog' },
                     { keys: ['⌘/Ctrl', 'S'], action: 'Save to templates' },
+                    { keys: ['⌘/Ctrl', 'Z'], action: 'Undo last generation' },
+                    { keys: ['⌘/Ctrl', '⇧', 'Z'], action: 'Redo generation' },
                     { keys: ['Esc'], action: 'Close dialogs' },
                   ].map((shortcut, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
@@ -315,6 +318,94 @@ export const HelpDialog: React.FC<HelpDialogProps> = ({ isOpen, onClose }) => {
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       Click the palette icon in the header to customize the color scheme. Choose from 8 accent colors,
                       toggle light/dark mode, apply preset themes, and access quick actions like clearing data or exporting settings.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquareCode className="w-5 h-5 text-purple-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">AI Code Review</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Get AI-powered code analysis with quality scores, issue detection, and optimization suggestions.
+                      The AI reviews for security, performance, and best practices, and can generate an optimized version.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shield className="w-5 h-5 text-blue-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Accessibility Audit</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Check your code for WCAG 2.1 compliance. Get detailed reports on contrast issues, ARIA attributes,
+                      keyboard navigation, semantic HTML, alt text, and focus management with specific fix suggestions.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileCode className="w-5 h-5 text-indigo-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Export to React/Vue/Svelte</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Convert your generated HTML/CSS to React (TSX), Vue 3 (SFC), or Svelte components.
+                      Copy, download, or open directly in CodeSandbox.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <QrCode className="w-5 h-5 text-violet-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">QR Code Preview</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Generate a QR code to preview your creation on mobile devices. Scan with your phone
+                      to test responsive layouts and touch interactions.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Terminal className="w-5 h-5 text-emerald-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Console Panel</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      View console.log, warnings, and errors from the preview iframe in a developer-friendly panel.
+                      Filter by log level, see stack traces for errors, and track message counts.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Shuffle className="w-5 h-5 text-pink-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Remix Designs</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Select 2-4 designs from your history and combine them into something new.
+                      AI will merge layouts, styles, and functionality based on your instructions.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Undo2 className="w-5 h-5 text-amber-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Undo/Redo</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      Made a mistake? Use ⌘Z to undo the last generation and go back. Use ⌘⇧Z to redo.
+                      Supports up to 20 undo steps.
+                    </p>
+                  </div>
+
+                  <div className="p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <GraduationCap className="w-5 h-5 text-sky-500" />
+                      <h4 className="font-medium text-zinc-900 dark:text-white">Interactive Tutorial</h4>
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                      New to Prism? The interactive tutorial walks you through all the features step by step.
+                      Clear your data in Themes & Tools to see it again.
                     </p>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { InputArea } from './components/InputArea';
 import { CodePreview } from './components/CodePreview';
@@ -18,6 +18,13 @@ import { VoiceCommandShowcase } from './components/VoiceCommandShowcase';
 import { VoiceMode } from './components/VoiceMode';
 import { HelpDialog } from './components/HelpDialog';
 import { ToolsSidebar } from './components/ToolsSidebar';
+import { CodeReviewPanel } from './components/CodeReviewPanel';
+import { AccessibilityAudit } from './components/AccessibilityAudit';
+import { ExportFormatDialog } from './components/ExportFormatDialog';
+import { QRCodePreview } from './components/QRCodePreview';
+import { ConsolePanel, ConsoleMessage } from './components/ConsolePanel';
+import { TutorialOverlay } from './components/TutorialOverlay';
+import { RemixDialog } from './components/RemixDialog';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
@@ -26,7 +33,8 @@ import { GeneratedUI, HistoryItem, UploadedFile, Viewport, ViewMode } from './ty
 import {
   Code2, Eye, Loader2, Sparkles, AlertTriangle, RefreshCcw, Terminal, ExternalLink,
   Rocket, ArrowRight, Activity, Box, LayoutDashboard, Globe, Calculator, Kanban,
-  CloudSun, Gamepad2, ShoppingCart, Music, Download, Share2, Layers, Edit3, GitCompare, Image
+  CloudSun, Gamepad2, ShoppingCart, Music, Download, Share2, Layers, Edit3, GitCompare, Image,
+  Undo2, Redo2, QrCode, Shield, FileCode, MessageSquareCode, GraduationCap, Shuffle
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -48,6 +56,17 @@ const App: React.FC = () => {
   const [showVoiceMode, setShowVoiceMode] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [showToolsSidebar, setShowToolsSidebar] = useState(false);
+  const [showCodeReview, setShowCodeReview] = useState(false);
+  const [showA11yAudit, setShowA11yAudit] = useState(false);
+  const [showExportFormat, setShowExportFormat] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [showConsole, setShowConsole] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(() => {
+    const hasSeenTutorial = localStorage.getItem('prism-tutorial-completed');
+    return !hasSeenTutorial;
+  });
+  const [showRemixDialog, setShowRemixDialog] = useState(false);
+  const [consoleMessages, setConsoleMessages] = useState<ConsoleMessage[]>([]);
   const [accentColor, setAccentColor] = useState(() => {
     return localStorage.getItem('prism-accent') || 'blue';
   });
@@ -55,6 +74,11 @@ const App: React.FC = () => {
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
   const [isAutoFixing, setIsAutoFixing] = useState(false);
+
+  // Undo/Redo state
+  const [undoStack, setUndoStack] = useState<GeneratedUI[]>([]);
+  const [redoStack, setRedoStack] = useState<GeneratedUI[]>([]);
+  const maxUndoSteps = 20;
 
   // Theme State
   const [isDark, setIsDark] = useState(() => {
@@ -183,6 +207,67 @@ const App: React.FC = () => {
     localStorage.setItem('prism-accent', accentColor);
   }, [accentColor]);
 
+  // Listen for console messages from iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'console') {
+        const { type, message, timestamp } = event.data.payload;
+        setConsoleMessages(prev => {
+          // Check if this is a duplicate of the last message
+          const lastMsg = prev[prev.length - 1];
+          if (lastMsg && lastMsg.message === message && lastMsg.type === type) {
+            return prev.map((msg, idx) =>
+              idx === prev.length - 1
+                ? { ...msg, count: (msg.count || 1) + 1 }
+                : msg
+            );
+          }
+          return [...prev, {
+            id: `${timestamp}-${Math.random().toString(36).substr(2, 9)}`,
+            type,
+            message,
+            timestamp: new Date(timestamp),
+          }];
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Undo/Redo handlers
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0 || !result) return;
+
+    const previousResult = undoStack[undoStack.length - 1];
+    setRedoStack(prev => [...prev, result].slice(-maxUndoSteps));
+    setUndoStack(prev => prev.slice(0, -1));
+    setResult(previousResult);
+    setEditedCode('');
+  }, [undoStack, result]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+
+    const nextResult = redoStack[redoStack.length - 1];
+    if (result) {
+      setUndoStack(prev => [...prev, result].slice(-maxUndoSteps));
+    }
+    setRedoStack(prev => prev.slice(0, -1));
+    setResult(nextResult);
+    setEditedCode('');
+  }, [redoStack, result]);
+
+  const clearConsole = useCallback(() => {
+    setConsoleMessages([]);
+  }, []);
+
+  const handleTutorialComplete = useCallback(() => {
+    localStorage.setItem('prism-tutorial-completed', 'true');
+    setShowTutorial(false);
+  }, []);
+
   const handleReset = useCallback(() => {
     setPrompt('');
     setFiles([]);
@@ -221,6 +306,11 @@ const App: React.FC = () => {
       };
 
       setHistory(prev => [...prev, newHistoryItem]);
+      // Push current result to undo stack before setting new result
+      if (result) {
+        setUndoStack(prev => [...prev, result].slice(-maxUndoSteps));
+        setRedoStack([]);
+      }
       setResult(data);
       setCurrentHistoryId(newHistoryItem.id);
       setEditedCode('');
@@ -343,6 +433,14 @@ Make sure to:
     setViewMode('diff');
   };
 
+  const handleRemix = useCallback(async (remixPrompt: string, selectedItems: HistoryItem[]) => {
+    const combinedContext = selectedItems.map(item => item.result.code).join('\n\n---\n\n');
+    const fullPrompt = `${remixPrompt}\n\nHere are the designs to combine:\n\n${combinedContext}`;
+
+    setShowRemixDialog(false);
+    await handleGenerate(fullPrompt);
+  }, [handleGenerate]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
@@ -393,6 +491,25 @@ Make sure to:
       shift: true,
       handler: () => result && setShowShareDialog(true),
       description: 'Share'
+    },
+    {
+      key: 'z',
+      meta: true,
+      handler: handleUndo,
+      description: 'Undo'
+    },
+    {
+      key: 'z',
+      meta: true,
+      shift: true,
+      handler: handleRedo,
+      description: 'Redo'
+    },
+    {
+      key: 'y',
+      meta: true,
+      handler: handleRedo,
+      description: 'Redo'
     },
   ]);
 
@@ -726,6 +843,86 @@ Make sure to:
                       >
                         <Layers className="w-4 h-4" />
                       </button>
+
+                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
+
+                      {/* New Feature Buttons */}
+                      <button
+                        onClick={() => setShowCodeReview(true)}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
+                        title="AI Code Review"
+                      >
+                        <MessageSquareCode className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowA11yAudit(true)}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
+                        title="Accessibility Audit"
+                      >
+                        <Shield className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowExportFormat(true)}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
+                        title="Export to React/Vue/Svelte"
+                      >
+                        <FileCode className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowQRCode(true)}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
+                        title="QR Code Preview"
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => setShowConsole(prev => !prev)}
+                        className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
+                          showConsole
+                            ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white'
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
+                        } ${consoleMessages.some(m => m.type === 'error') ? 'text-red-500' : ''}`}
+                        title="Console"
+                      >
+                        <Terminal className="w-4 h-4" />
+                        {consoleMessages.filter(m => m.type === 'error').length > 0 && (
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setShowRemixDialog(true)}
+                        disabled={history.length < 2}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Remix Designs"
+                      >
+                        <Shuffle className="w-4 h-4" />
+                      </button>
+
+                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
+
+                      {/* Undo/Redo */}
+                      <button
+                        onClick={handleUndo}
+                        disabled={undoStack.length === 0}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Undo (⌘Z)"
+                      >
+                        <Undo2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={handleRedo}
+                        disabled={redoStack.length === 0}
+                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Redo (⌘⇧Z)"
+                      >
+                        <Redo2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -857,6 +1054,66 @@ Make sure to:
         toggleTheme={toggleTheme}
         accentColor={accentColor}
         setAccentColor={setAccentColor}
+      />
+
+      {/* New Feature Dialogs */}
+      <CodeReviewPanel
+        isOpen={showCodeReview}
+        onClose={() => setShowCodeReview(false)}
+        code={currentCode}
+        apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
+        onApplyOptimization={(optimizedCode) => {
+          if (result) {
+            setUndoStack(prev => [...prev, result].slice(-maxUndoSteps));
+            setRedoStack([]);
+          }
+          setResult(prev => prev ? { ...prev, code: optimizedCode } : null);
+          setEditedCode('');
+          setShowCodeReview(false);
+        }}
+      />
+
+      <AccessibilityAudit
+        isOpen={showA11yAudit}
+        onClose={() => setShowA11yAudit(false)}
+        code={currentCode}
+        apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
+      />
+
+      <ExportFormatDialog
+        isOpen={showExportFormat}
+        onClose={() => setShowExportFormat(false)}
+        code={currentCode}
+        apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
+      />
+
+      <QRCodePreview
+        isOpen={showQRCode}
+        onClose={() => setShowQRCode(false)}
+        code={currentCode}
+      />
+
+      {showConsole && (
+        <ConsolePanel
+          isOpen={showConsole}
+          onClose={() => setShowConsole(false)}
+          messages={consoleMessages}
+          onClear={clearConsole}
+        />
+      )}
+
+      <TutorialOverlay
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onComplete={handleTutorialComplete}
+      />
+
+      <RemixDialog
+        isOpen={showRemixDialog}
+        onClose={() => setShowRemixDialog(false)}
+        history={history}
+        onRemix={handleRemix}
+        isGenerating={loading}
       />
     </div>
   );
