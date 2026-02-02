@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { CodePreviewProps, Viewport } from '../types';
 import { ErrorOverlay } from './ErrorOverlay';
 
-const VIEWPORT_WIDTHS: Record<Viewport, string> = {
-  mobile: '375px',
-  tablet: '768px',
-  desktop: '1024px',
-  full: '100%',
+const VIEWPORT_WIDTHS: Record<Viewport, number> = {
+  mobile: 375,
+  tablet: 768,
+  desktop: 1024,
+  full: 0, // 0 means use container width
 };
 
 interface ExtendedCodePreviewProps extends CodePreviewProps {
@@ -17,8 +17,27 @@ interface ExtendedCodePreviewProps extends CodePreviewProps {
 
 export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport = 'full', onAutofix, isFixing = false }) => {
   const [runtimeError, setRuntimeError] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const iframeKey = useRef(0);
+
+  // Track container width for smooth full-width transitions
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+    const resizeObserver = new ResizeObserver(updateWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Inject error handler script and base target into HTML
   const htmlWithErrorHandler = html.replace(
@@ -136,20 +155,33 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
     }
   };
 
-  const width = VIEWPORT_WIDTHS[viewport];
   const isFullWidth = viewport === 'full';
+  const targetWidth = isFullWidth ? containerWidth : VIEWPORT_WIDTHS[viewport];
 
   return (
-    <div className={`w-full h-full ${isFullWidth ? '' : 'flex items-start justify-center bg-zinc-100 dark:bg-zinc-900/50 overflow-auto p-4'}`}>
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-start justify-center overflow-auto"
+      style={{
+        backgroundColor: isFullWidth ? 'transparent' : undefined,
+      }}
+    >
       <div
-        className={`${isFullWidth ? 'w-full h-full' : 'bg-white dark:bg-zinc-900 shadow-xl rounded-lg overflow-hidden transition-all duration-300'}`}
+        className={`relative ${isFullWidth ? '' : 'my-4'}`}
         style={{
-          width: isFullWidth ? '100%' : width,
+          width: isFullWidth ? '100%' : `${targetWidth}px`,
           height: isFullWidth ? '100%' : 'calc(100% - 2rem)',
           maxWidth: '100%',
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'width, height',
         }}
       >
-        <div className="relative w-full h-full">
+        <div
+          className={`w-full h-full overflow-hidden ${isFullWidth ? '' : 'bg-white dark:bg-zinc-900 shadow-2xl rounded-xl border border-zinc-200 dark:border-zinc-700'}`}
+          style={{
+            transition: 'box-shadow 0.4s ease, border-radius 0.4s ease',
+          }}
+        >
           <iframe
             key={iframeKey.current}
             ref={iframeRef}
@@ -158,17 +190,17 @@ export const CodePreview: React.FC<ExtendedCodePreviewProps> = ({ html, viewport
             className="w-full h-full border-none bg-white"
             sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-modals"
           />
-          {runtimeError && (
-            <ErrorOverlay
-              error={runtimeError}
-              onRetry={handleRetry}
-              onCopyError={handleCopyError}
-              onDismiss={() => setRuntimeError(null)}
-              onAutofix={onAutofix ? () => onAutofix(runtimeError) : undefined}
-              isFixing={isFixing}
-            />
-          )}
         </div>
+        {runtimeError && (
+          <ErrorOverlay
+            error={runtimeError}
+            onRetry={handleRetry}
+            onCopyError={handleCopyError}
+            onDismiss={() => setRuntimeError(null)}
+            onAutofix={onAutofix ? () => onAutofix(runtimeError) : undefined}
+            isFixing={isFixing}
+          />
+        )}
       </div>
     </div>
   );
