@@ -60,7 +60,8 @@ COMPLETE HEAD SECTION (copy EXACTLY):
     }
   }
   </script>
-  <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>
+  <script src="https://esm.sh/es-module-shims@1.8.0" crossorigin="anonymous" async></script>
+  <script src="https://unpkg.com/@babel/standalone@7.24.0/babel.min.js" crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #root { width: 100%; height: 100%; overflow: hidden; }
@@ -69,10 +70,14 @@ COMPLETE HEAD SECTION (copy EXACTLY):
 <body>
   <div id="root"></div>
   <script type="text/babel" data-type="module">
-    // Your React/R3F code goes here
+    // IMPORTS GO HERE - copy exactly from REQUIRED IMPORTS section
+    // YOUR COMPONENT CODE GOES HERE
+    // END WITH: const root = createRoot(document.getElementById('root')); root.render(<App />);
   </script>
 </body>
 </html>
+
+IMPORTANT: The script MUST be exactly type="text/babel" data-type="module" (no data-presets attribute).
 
 REQUIRED IMPORTS (at top of script):
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
