@@ -45,9 +45,12 @@ COMPLETE HEAD SECTION (copy EXACTLY):
   {
     "imports": {
       "react": "https://esm.sh/react@18.3.1",
+      "react/jsx-runtime": "https://esm.sh/react@18.3.1/jsx-runtime",
+      "react/jsx-dev-runtime": "https://esm.sh/react@18.3.1/jsx-dev-runtime",
       "react-dom": "https://esm.sh/react-dom@18.3.1",
       "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
       "three": "https://esm.sh/three@0.162.0",
+      "three/addons/": "https://esm.sh/three@0.162.0/examples/jsm/",
       "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.16.1?external=react,react-dom,three",
       "@react-three/drei": "https://esm.sh/@react-three/drei@9.102.2?external=react,react-dom,three,@react-three/fiber",
       "@react-three/postprocessing": "https://esm.sh/@react-three/postprocessing@2.16.2?external=react,react-dom,three,@react-three/fiber",
