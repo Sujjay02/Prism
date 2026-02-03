@@ -7,7 +7,7 @@
 
 **One prompt. Infinite possibilities. Powered by Gemini 3.**
 
-[![Gemini 3](https://img.shields.io/badge/Powered%20by-Gemini%203-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Gemini](https://img.shields.io/badge/Powered%20by-Gemini%203-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
 [![React](https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
@@ -46,10 +46,16 @@ Prism is an **AI-powered universal code generator** that transforms natural lang
 | Python + Visualization | No | No | **Pyodide Runtime** |
 | Voice Input | No | No | Yes |
 | Image-to-UI | Yes | Yes | Yes |
-| AI Code Explanation | No | No | **Gemini 3** |
-| Live Code Editor | No | Yes | **Monaco** |
-| Export to GitHub | No | No | Yes |
+| AI Code Review | No | No | **Gemini-powered** |
+| AI Code Explanation | No | No | **Gemini-powered** |
+| Accessibility Audit | No | No | **WCAG 2.1 Compliance** |
+| Live Code Editor | No | Yes | **Monaco Editor** |
+| Export to React/Vue/Svelte | Yes | Yes | Yes |
+| QR Code Mobile Preview | No | No | Yes |
 | Offline Templates | No | No | **15+ built-in** |
+| Ribbon-style Toolbar | No | No | **MS Word-style UI** |
+| App Publishing & Management | No | No | Yes |
+| Embed Code Generation | No | No | Yes |
 
 ---
 
@@ -57,7 +63,7 @@ Prism is an **AI-powered universal code generator** that transforms natural lang
 
 ### Multi-Modal Input
 - **Text Prompts**: Describe what you want in natural language
-- **Voice Commands**: Speak your ideas, get code (Gemini 3 transcription)
+- **Voice Commands**: Speak your ideas, get code (Gemini transcription)
 - **Image Upload**: Screenshot a design, get the code
 - **Iterative Refinement**: Build on previous generations
 
@@ -71,7 +77,7 @@ Prism is an **AI-powered universal code generator** that transforms natural lang
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    GEMINI 3 PRO PREVIEW                         │
+│                    GEMINI 2.0 FLASH                             │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
 │   │   Vision    │  │   Reasoning │  │   Search    │            │
 │   │   Analysis  │  │   & Logic   │  │  Grounding  │            │
@@ -127,7 +133,52 @@ Landing pages, forms, and static sites with modern design.
 
 ---
 
-## How We Use Gemini 3
+## New Features
+
+### Ribbon-Style Toolbar
+Microsoft Word-inspired toolbar with categorized tool groups:
+- **View**: Preview, Code, Editor, Diff mode
+- **Device**: Mobile, Tablet, Desktop, Full viewport presets
+- **AI**: Explain, Code Review, Accessibility Audit
+- **Export**: HTML, React/Vue/Svelte, Share, QR Code
+- **Tools**: Templates, Remix, Console
+
+### App Management
+Publish and manage your generated apps:
+- Custom names, icons (emoji), and descriptions
+- Category organization (Dashboard, Landing, Form, Game, etc.)
+- Tags for searchability
+- Pin favorite apps
+- Grid and List view modes
+- Sort by date, name, or category
+- Duplicate apps with one click
+
+### Embed Code Generation
+Share your creations anywhere:
+- Iframe embed with customizable dimensions
+- JavaScript embed for more flexibility
+- Live preview of embedded content
+- Copy-to-clipboard functionality
+
+### AI-Powered Tools
+- **Code Review**: Quality scores, issue detection, optimization suggestions
+- **Accessibility Audit**: WCAG 2.1 compliance checking
+- **Code Explanation**: Understand how generated code works
+- **Auto-fix**: Automatically fix runtime errors
+
+### Export Options
+- Download as HTML file
+- Convert to React (TSX), Vue 3 (SFC), or Svelte components
+- Open directly in CodeSandbox
+- Share via URL with LZ-String compression
+- QR Code for mobile preview
+
+### Remix Feature
+Combine 2-4 previous designs into something new. AI merges layouts, styles, and functionality based on your instructions.
+
+---
+
+## How We Use Gemini
 
 Prism leverages **Gemini 3's advanced capabilities** for intelligent code generation:
 
@@ -141,6 +192,7 @@ Prism leverages **Gemini 3's advanced capabilities** for intelligent code genera
 - **Audio Transcription**: Converts voice commands to text with high accuracy
 - **Code Explanation**: Analyzes generated code and explains how it works
 - **Improvement Suggestions**: Recommends enhancements for generated code
+- **Fast Inference**: Quick responses for interactive features
 
 ### Key Integration Points
 
@@ -160,7 +212,7 @@ const response = await ai.models.generateContent({
   }
 });
 
-// AI-powered code explanation
+// AI-powered code explanation (using Flash for speed)
 const explanation = await ai.models.generateContent({
   model: 'gemini-3-flash-preview',
   contents: { parts: [{ text: `Explain this code: ${code}` }] },
@@ -169,7 +221,7 @@ const explanation = await ai.models.generateContent({
 ```
 
 ### Smart Mode Detection
-Gemini 3 automatically detects the appropriate output mode based on the prompt:
+Gemini automatically detects the appropriate output mode based on the prompt:
 - **Python keywords** → Pyodide-compatible Python with matplotlib
 - **3D/React keywords** → React Three Fiber with proper import maps
 - **Default** → Tailwind CSS HTML with embedded JavaScript
@@ -186,17 +238,17 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │                         FRONTEND (React + Vite)                      │  │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │  │
-│  │  │   Input     │ │   Live      │ │   Code      │ │   Export    │    │  │
-│  │  │   Area      │ │   Preview   │ │   Editor    │ │   Dialog    │    │  │
-│  │  │ (Text/Voice │ │  (Iframe +  │ │  (Monaco)   │ │ (HTML/React │    │  │
-│  │  │  /Image)    │ │   Sandbox)  │ │             │ │  /GitHub)   │    │  │
+│  │  │   Input     │ │   Live      │ │   Code      │ │   Ribbon    │    │  │
+│  │  │   Area      │ │   Preview   │ │   Editor    │ │   Toolbar   │    │  │
+│  │  │ (Text/Voice │ │  (Iframe +  │ │  (Monaco)   │ │ (MS Word    │    │  │
+│  │  │  /Image)    │ │   Sandbox)  │ │             │ │  style)     │    │  │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘    │  │
 │  │                                                                      │  │
 │  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐    │  │
-│  │  │  Template   │ │   AI Code   │ │   Asset     │ │   Share     │    │  │
-│  │  │  Gallery    │ │   Explain   │ │   Manager   │ │   Dialog    │    │  │
-│  │  │ (15+ built- │ │  (Gemini 3  │ │  (Images/   │ │  (URL-based │    │  │
-│  │  │  in + user) │ │   powered)  │ │   3D files) │ │   sharing)  │    │  │
+│  │  │  Template   │ │   AI Code   │ │   App       │ │   Export    │    │  │
+│  │  │  Gallery    │ │   Review    │ │   Settings  │ │   Dialogs   │    │  │
+│  │  │ (15+ built- │ │  & A11y     │ │  & Embed    │ │  (HTML/React│    │  │
+│  │  │  in + user) │ │   Audit     │ │   Code      │ │  /QR/Share) │    │  │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘    │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                      │                                     │
@@ -211,8 +263,8 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 │  │  │  • transcribeAudio() - Voice-to-text                           │ │  │
 │  │  └─────────────────────────────────────────────────────────────────┘ │  │
 │  │  ┌─────────────────────┐ ┌─────────────────────┐                    │  │
-│  │  │   storageService    │ │   githubService     │                    │  │
-│  │  │   (IndexedDB)       │ │   (GitHub API)      │                    │  │
+│  │  │   storageService    │ │   exportUtils       │                    │  │
+│  │  │   (IndexedDB)       │ │   (HTML/React/Vue)  │                    │  │
 │  │  └─────────────────────┘ └─────────────────────┘                    │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                      │                                     │
@@ -245,6 +297,7 @@ Gemini 3 automatically detects the appropriate output mode based on the prompt:
 | **Storage** | IndexedDB (idb-keyval) |
 | **Sharing** | LZ-String compression |
 | **Icons** | Lucide React |
+| **Diff Engine** | diff (npm package) |
 
 ---
 
@@ -281,7 +334,7 @@ cd prism
 npm install
 
 # Set up environment variables
-echo "API_KEY=your_gemini_api_key_here" > .env.local
+echo "VITE_GEMINI_API_KEY=your_gemini_api_key_here" > .env.local
 
 # Start development server
 npm run dev
@@ -293,8 +346,10 @@ npm run dev
 2. **Voice Input**: Click the microphone icon and speak your idea
 3. **Image Upload**: Drag and drop a wireframe or screenshot
 4. **Iterate**: Refine your generation with follow-up prompts
-5. **Explain**: Click the purple "Explain" button to understand the code
-6. **Export**: Download as HTML, React component, or push to GitHub
+5. **Explain**: Click "Explain" in the AI group to understand the code
+6. **Review**: Get AI-powered code review and accessibility audit
+7. **Export**: Download as HTML, React, Vue, or Svelte component
+8. **Publish**: Save as an app with custom name, icon, and category
 
 ---
 
@@ -303,11 +358,16 @@ npm run dev
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl/Cmd + Enter` | Generate code |
-| `Ctrl/Cmd + K` | Focus prompt input |
-| `Ctrl/Cmd + E` | Toggle code editor |
-| `Ctrl/Cmd + 1/2/3` | Switch viewport size |
-| `Ctrl/Cmd + Shift + S` | Open share dialog |
-| `Ctrl/Cmd + B` | Toggle history sidebar |
+| `Ctrl/Cmd + K` | Clear prompt |
+| `Ctrl/Cmd + B` | Toggle sidebar |
+| `Ctrl/Cmd + 1` | Switch to Preview |
+| `Ctrl/Cmd + 2` | Switch to Code view |
+| `Ctrl/Cmd + 3` | Switch to Editor |
+| `Ctrl/Cmd + E` | Open Export dialog |
+| `Ctrl/Cmd + Shift + S` | Open Share dialog |
+| `Ctrl/Cmd + Z` | Undo last generation |
+| `Ctrl/Cmd + Shift + Z` | Redo generation |
+| `Esc` | Close dialogs |
 
 ---
 
@@ -315,31 +375,72 @@ npm run dev
 
 ```
 prism/
-├── components/           # React components
-│   ├── InputArea.tsx     # Text, voice, image input
-│   ├── CodePreview.tsx   # Sandboxed iframe preview
-│   ├── LiveEditor.tsx    # Monaco code editor
-│   ├── CodeExplanation.tsx # AI-powered explanation
-│   ├── GeneratingAnimation.tsx # Loading animation
-│   ├── VoiceCommandShowcase.tsx # Voice examples
-│   ├── TemplateGallery.tsx # Built-in templates
+├── components/               # React components
+│   ├── InputArea.tsx         # Text, voice, image input
+│   ├── CodePreview.tsx       # Sandboxed iframe preview
+│   ├── LiveEditor.tsx        # Monaco code editor
+│   ├── RibbonToolbar.tsx     # MS Word-style toolbar
+│   ├── CodeExplanation.tsx   # AI-powered explanation
+│   ├── CodeReviewPanel.tsx   # AI code review
+│   ├── AccessibilityAudit.tsx # WCAG compliance checker
+│   ├── TemplateGallery.tsx   # Built-in templates
+│   ├── AppSettingsDialog.tsx # App name, icon, category
+│   ├── EmbedCodeDialog.tsx   # Embed code generator
+│   ├── ExportFormatDialog.tsx # React/Vue/Svelte export
+│   ├── QRCodePreview.tsx     # QR code for mobile
+│   ├── RemixDialog.tsx       # Combine multiple designs
+│   ├── HistorySidebar.tsx    # History with grid/list view
 │   └── ...
 ├── services/
-│   ├── geminiService.ts  # Gemini 3 API integration
-│   ├── storageService.ts # IndexedDB persistence
-│   └── githubService.ts  # GitHub export
+│   ├── geminiService.ts      # Gemini API integration
+│   └── storageService.ts     # IndexedDB persistence
 ├── hooks/
 │   └── useKeyboardShortcuts.ts
 ├── utils/
-│   ├── exportUtils.ts    # Export functionality
-│   ├── diffUtils.ts      # Version comparison
-│   └── urlUtils.ts       # URL sharing
+│   ├── exportUtils.ts        # Export functionality
+│   ├── diffUtils.ts          # Version comparison
+│   └── urlUtils.ts           # URL sharing
 ├── data/
-│   └── defaultTemplates.ts # 15+ built-in templates
-└── App.tsx               # Main application
+│   └── defaultTemplates.ts   # 15+ built-in templates
+├── types.ts                  # TypeScript definitions
+└── App.tsx                   # Main application
 ```
 
+---
 
+## Built-in Templates
+
+Prism comes with 15+ ready-to-use templates across categories:
+
+| Category | Templates |
+|----------|-----------|
+| **Dashboard** | Analytics Dashboard, Admin Panel, Project Management |
+| **Landing** | SaaS Landing, Portfolio, Coming Soon |
+| **Form** | Contact Form, Login/Register, Survey |
+| **UI Components** | Pricing Table, Testimonials, FAQ Accordion |
+| **Game** | Snake Game, Memory Match |
+| **Data Viz** | Chart Dashboard, Data Table |
+| **3D** | 3D Scene, Interactive Visualization |
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 
 <div align="center">
 
