@@ -36,6 +36,33 @@ export interface UploadedFile {
   fileName?: string;
 }
 
+// App categories for organization
+export type AppCategory = 'dashboard' | 'landing' | 'form' | 'game' | 'visualization' | 'ecommerce' | 'social' | 'utility' | 'other';
+
+// App settings for published apps
+export interface AppSettings {
+  name?: string;
+  description?: string;
+  icon?: string; // emoji
+  category?: AppCategory;
+  tags?: string[];
+  isPinned?: boolean;
+  isMobileFriendly?: boolean;
+  hasErrors?: boolean;
+  lastModified?: number;
+  versionCount?: number;
+  thumbnail?: string; // base64 screenshot
+  folderId?: string;
+}
+
+// Folder for organizing apps
+export interface AppFolder {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: number;
+}
+
 export interface HistoryItem {
   id: string;
   prompt: string;
@@ -43,6 +70,7 @@ export interface HistoryItem {
   result: GeneratedUI;
   timestamp: number;
   isPublished?: boolean;
+  appSettings?: AppSettings;
 }
 
 export interface InputAreaProps {

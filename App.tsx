@@ -25,11 +25,13 @@ import { QRCodePreview } from './components/QRCodePreview';
 import { ConsolePanel, ConsoleMessage } from './components/ConsolePanel';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import { RemixDialog } from './components/RemixDialog';
+import { AppSettingsDialog } from './components/AppSettingsDialog';
+import { EmbedCodeDialog } from './components/EmbedCodeDialog';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { decodeShareUrl, hasShareParameter, clearShareParameter } from './utils/urlUtils';
-import { GeneratedUI, HistoryItem, UploadedFile, Viewport, ViewMode } from './types';
+import { GeneratedUI, HistoryItem, UploadedFile, Viewport, ViewMode, AppSettings } from './types';
 import {
   Code2, Eye, Loader2, Sparkles, AlertTriangle, RefreshCcw, Terminal, ExternalLink,
   Rocket, ArrowRight, Activity, Box, LayoutDashboard, Globe, Calculator, Kanban,
@@ -66,6 +68,9 @@ const App: React.FC = () => {
     return !hasSeenTutorial;
   });
   const [showRemixDialog, setShowRemixDialog] = useState(false);
+  const [showAppSettings, setShowAppSettings] = useState(false);
+  const [showEmbedDialog, setShowEmbedDialog] = useState(false);
+  const [selectedAppItem, setSelectedAppItem] = useState<HistoryItem | null>(null);
   const [consoleMessages, setConsoleMessages] = useState<ConsoleMessage[]>([]);
   const [accentColor, setAccentColor] = useState(() => {
     return localStorage.getItem('prism-accent') || 'blue';
@@ -74,6 +79,7 @@ const App: React.FC = () => {
   const [diffTarget, setDiffTarget] = useState<HistoryItem | null>(null);
   const [editedCode, setEditedCode] = useState<string>('');
   const [isAutoFixing, setIsAutoFixing] = useState(false);
+  const [selectedExportItem, setSelectedExportItem] = useState<HistoryItem | null>(null);
 
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<GeneratedUI[]>([]);
@@ -441,6 +447,77 @@ Make sure to:
     await handleGenerate(fullPrompt);
   }, [handleGenerate]);
 
+  // Sidebar Export Handlers
+  const handleSidebarExport = useCallback((item: HistoryItem) => {
+    setSelectedExportItem(item);
+    setShowExportDialog(true);
+  }, []);
+
+  const handleSidebarShare = useCallback((item: HistoryItem) => {
+    setSelectedExportItem(item);
+    setShowShareDialog(true);
+  }, []);
+
+  const handleSidebarQRCode = useCallback((item: HistoryItem) => {
+    setSelectedExportItem(item);
+    setShowQRCode(true);
+  }, []);
+
+  const handleSidebarExportFormat = useCallback((item: HistoryItem) => {
+    setSelectedExportItem(item);
+    setShowExportFormat(true);
+  }, []);
+
+  // App Settings Handlers
+  const handleOpenAppSettings = useCallback((item: HistoryItem) => {
+    setSelectedAppItem(item);
+    setShowAppSettings(true);
+  }, []);
+
+  const handleSaveAppSettings = useCallback((id: string, settings: AppSettings) => {
+    setHistory(prev => prev.map(item => {
+      if (item.id === id) {
+        return { ...item, appSettings: settings };
+      }
+      return item;
+    }));
+  }, []);
+
+  const handleTogglePin = useCallback((item: HistoryItem) => {
+    setHistory(prev => prev.map(h => {
+      if (h.id === item.id) {
+        return {
+          ...h,
+          appSettings: {
+            ...h.appSettings,
+            isPinned: !h.appSettings?.isPinned
+          }
+        };
+      }
+      return h;
+    }));
+  }, []);
+
+  const handleDuplicateApp = useCallback((item: HistoryItem) => {
+    const newItem: HistoryItem = {
+      ...item,
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      appSettings: {
+        ...item.appSettings,
+        name: `${item.appSettings?.name || item.result.explanation} (Copy)`,
+        isPinned: false,
+        versionCount: 1,
+      }
+    };
+    setHistory(prev => [...prev, newItem]);
+  }, []);
+
+  const handleOpenEmbed = useCallback((item: HistoryItem) => {
+    setSelectedAppItem(item);
+    setShowEmbedDialog(true);
+  }, []);
+
   // Keyboard shortcuts
   useKeyboardShortcuts([
     {
@@ -580,6 +657,14 @@ Make sure to:
           currentId={currentHistoryId}
           isOpen={isSidebarOpen}
           setIsOpen={setIsSidebarOpen}
+          onExport={handleSidebarExport}
+          onShare={handleSidebarShare}
+          onQRCode={handleSidebarQRCode}
+          onExportFormat={handleSidebarExportFormat}
+          onDuplicate={handleDuplicateApp}
+          onTogglePin={handleTogglePin}
+          onOpenSettings={handleOpenAppSettings}
+          onOpenEmbed={handleOpenEmbed}
         />
 
         <main className="flex-1 flex flex-col relative overflow-hidden w-full">
@@ -984,11 +1069,11 @@ Make sure to:
       </div>
 
       {/* Dialogs */}
-      {showExportDialog && result && (
+      {showExportDialog && (result || selectedExportItem) && (
         <ExportDialog
-          code={currentCode}
-          explanation={result.explanation}
-          onClose={() => setShowExportDialog(false)}
+          code={selectedExportItem?.result.code || currentCode}
+          explanation={selectedExportItem?.result.explanation || result?.explanation || ''}
+          onClose={() => { setShowExportDialog(false); setSelectedExportItem(null); }}
         />
       )}
 
@@ -1010,11 +1095,11 @@ Make sure to:
         />
       )}
 
-      {showShareDialog && result && (
+      {showShareDialog && (result || selectedExportItem) && (
         <ShareDialog
-          code={currentCode}
-          explanation={result.explanation}
-          onClose={() => setShowShareDialog(false)}
+          code={selectedExportItem?.result.code || currentCode}
+          explanation={selectedExportItem?.result.explanation || result?.explanation || ''}
+          onClose={() => { setShowShareDialog(false); setSelectedExportItem(null); }}
         />
       )}
 
@@ -1082,15 +1167,15 @@ Make sure to:
 
       <ExportFormatDialog
         isOpen={showExportFormat}
-        onClose={() => setShowExportFormat(false)}
-        code={currentCode}
+        onClose={() => { setShowExportFormat(false); setSelectedExportItem(null); }}
+        code={selectedExportItem?.result.code || currentCode}
         apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
       />
 
       <QRCodePreview
         isOpen={showQRCode}
-        onClose={() => setShowQRCode(false)}
-        code={currentCode}
+        onClose={() => { setShowQRCode(false); setSelectedExportItem(null); }}
+        code={selectedExportItem?.result.code || currentCode}
       />
 
       {showConsole && (
@@ -1115,6 +1200,23 @@ Make sure to:
         onRemix={handleRemix}
         isGenerating={loading}
       />
+
+      {showAppSettings && selectedAppItem && (
+        <AppSettingsDialog
+          isOpen={showAppSettings}
+          onClose={() => { setShowAppSettings(false); setSelectedAppItem(null); }}
+          item={selectedAppItem}
+          onSave={handleSaveAppSettings}
+        />
+      )}
+
+      {showEmbedDialog && selectedAppItem && (
+        <EmbedCodeDialog
+          isOpen={showEmbedDialog}
+          onClose={() => { setShowEmbedDialog(false); setSelectedAppItem(null); }}
+          item={selectedAppItem}
+        />
+      )}
     </div>
   );
 };
