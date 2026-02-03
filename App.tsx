@@ -6,7 +6,6 @@ import { CodeViewer } from './components/CodeViewer';
 import { PythonRunner } from './components/PythonRunner';
 import { HistorySidebar } from './components/HistorySidebar';
 import { LiveEditor } from './components/LiveEditor';
-import { ViewportToolbar } from './components/ViewportToolbar';
 import { ExportDialog } from './components/ExportDialog';
 import { TemplateGallery } from './components/TemplateGallery';
 import { DiffViewer } from './components/DiffViewer';
@@ -27,16 +26,16 @@ import { TutorialOverlay } from './components/TutorialOverlay';
 import { RemixDialog } from './components/RemixDialog';
 import { AppSettingsDialog } from './components/AppSettingsDialog';
 import { EmbedCodeDialog } from './components/EmbedCodeDialog';
+import { RibbonToolbar } from './components/RibbonToolbar';
 import { generateUI } from './services/geminiService';
 import { saveHistory, loadHistory } from './services/storageService';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { decodeShareUrl, hasShareParameter, clearShareParameter } from './utils/urlUtils';
 import { GeneratedUI, HistoryItem, UploadedFile, Viewport, ViewMode, AppSettings } from './types';
 import {
-  Code2, Eye, Loader2, Sparkles, AlertTriangle, RefreshCcw, Terminal, ExternalLink,
-  Rocket, ArrowRight, Activity, Box, LayoutDashboard, Globe, Calculator, Kanban,
-  CloudSun, Gamepad2, ShoppingCart, Music, Download, Share2, Layers, Edit3, GitCompare, Image,
-  Undo2, Redo2, QrCode, Shield, FileCode, MessageSquareCode, GraduationCap, Shuffle
+  Sparkles, AlertTriangle, RefreshCcw,
+  ArrowRight, Activity, Box, LayoutDashboard, Globe, Calculator, Kanban,
+  CloudSun, Gamepad2, ShoppingCart, Music, Layers, Image
 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -766,251 +765,46 @@ Make sure to:
 
             {result && !loading && !error && (
               <div className="flex flex-col h-full bg-surface border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-2xl transition-colors duration-300">
-                {/* Toolbar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 gap-3 sm:gap-0">
-                  <div className="flex flex-col space-y-1 overflow-hidden">
-                    <div className="flex items-center space-x-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0"></span>
-                      <span className="font-medium truncate max-w-md">{result.explanation}</span>
-                    </div>
-                    {result.sources && result.sources.length > 0 && (
-                      <div className="flex items-center space-x-2 text-xs overflow-x-auto no-scrollbar">
-                        <span className="text-zinc-400 shrink-0">Sources:</span>
-                        {result.sources.map((source, idx) => (
-                          <a
-                            key={idx}
-                            href={source.uri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-blue-500 hover:text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full whitespace-nowrap transition-colors"
-                            title={source.title}
-                          >
-                            <span className="max-w-[100px] truncate">{source.title}</span>
-                            <ExternalLink className="w-3 h-3 shrink-0" />
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 flex-wrap shrink-0 self-end sm:self-auto">
-                    {/* Viewport Toolbar - only show in preview mode */}
-                    {viewMode === 'preview' && !isCurrentResultPython && (
-                      <ViewportToolbar viewport={viewport} onViewportChange={setViewport} />
-                    )}
-
-                    <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border border-zinc-200 dark:border-zinc-800">
-                      {/* Publish Toggle */}
-                      <button
-                        onClick={handleTogglePublish}
-                        className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                          isPublished
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 ring-1 ring-purple-500/30'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                        }`}
-                        title={isPublished ? "Unpublish App" : "Publish as App"}
-                      >
-                        <Rocket className={`w-4 h-4 ${isPublished ? 'fill-current' : ''}`} />
-                      </button>
-
-                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
-
-                      {/* View Mode Buttons */}
-                      {!isCurrentResultPython && (
-                        <button
-                          onClick={() => setViewMode('preview')}
-                          className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                            viewMode === 'preview'
-                              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                              : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                          }`}
-                          title="Preview"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {isCurrentResultPython && (
-                        <button
-                          onClick={() => setViewMode('python')}
-                          className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                            viewMode === 'python'
-                              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                              : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                          }`}
-                          title="Python"
-                        >
-                          <Terminal className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => setViewMode('code')}
-                        className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                          viewMode === 'code'
-                            ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                        }`}
-                        title="Source Code"
-                      >
-                        <Code2 className="w-4 h-4" />
-                      </button>
-
-                      {!isCurrentResultPython && (
-                        <button
-                          onClick={() => {
-                            setEditedCode(result.code);
-                            setViewMode('editor');
-                          }}
-                          className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                            viewMode === 'editor'
-                              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                              : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                          }`}
-                          title="Live Editor"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      {history.length > 1 && (
-                        <button
-                          onClick={() => {
-                            const previousItem = history.find(h => h.id !== currentHistoryId);
-                            if (previousItem) {
-                              setDiffTarget(previousItem);
-                              setViewMode('diff');
-                            }
-                          }}
-                          className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                            viewMode === 'diff'
-                              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm'
-                              : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                          }`}
-                          title="Compare Versions"
-                        >
-                          <GitCompare className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
-
-                      {/* Action Buttons */}
-                      <button
-                        onClick={() => setShowExportDialog(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="Export"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowShareDialog(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="Share"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowExplanation(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-purple-500 hover:text-purple-700 dark:hover:text-purple-400 transition-all bg-purple-50 dark:bg-purple-900/20"
-                        title="AI Explain"
-                      >
-                        <Sparkles className="w-4 h-4" />
-                        <span className="hidden sm:inline text-xs font-medium">Explain</span>
-                      </button>
-
-                      <button
-                        onClick={() => setShowTemplateGallery(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="Templates"
-                      >
-                        <Layers className="w-4 h-4" />
-                      </button>
-
-                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
-
-                      {/* New Feature Buttons */}
-                      <button
-                        onClick={() => setShowCodeReview(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="AI Code Review"
-                      >
-                        <MessageSquareCode className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowA11yAudit(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="Accessibility Audit"
-                      >
-                        <Shield className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowExportFormat(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="Export to React/Vue/Svelte"
-                      >
-                        <FileCode className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowQRCode(true)}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all"
-                        title="QR Code Preview"
-                      >
-                        <QrCode className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => setShowConsole(prev => !prev)}
-                        className={`flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm transition-all ${
-                          showConsole
-                            ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-900 dark:text-white'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300'
-                        } ${consoleMessages.some(m => m.type === 'error') ? 'text-red-500' : ''}`}
-                        title="Console"
-                      >
-                        <Terminal className="w-4 h-4" />
-                        {consoleMessages.filter(m => m.type === 'error').length > 0 && (
-                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => setShowRemixDialog(true)}
-                        disabled={history.length < 2}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Remix Designs"
-                      >
-                        <Shuffle className="w-4 h-4" />
-                      </button>
-
-                      <div className="w-px h-4 bg-zinc-300 dark:bg-zinc-700"></div>
-
-                      {/* Undo/Redo */}
-                      <button
-                        onClick={handleUndo}
-                        disabled={undoStack.length === 0}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Undo (⌘Z)"
-                      >
-                        <Undo2 className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={handleRedo}
-                        disabled={redoStack.length === 0}
-                        className="flex items-center space-x-1 px-2 py-1.5 rounded-md text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                        title="Redo (⌘⇧Z)"
-                      >
-                        <Redo2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                {/* Ribbon Toolbar */}
+                <RibbonToolbar
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  viewport={viewport}
+                  setViewport={setViewport}
+                  isCurrentResultPython={isCurrentResultPython}
+                  hasHistory={history.length > 1}
+                  onOpenEditor={() => {
+                    setEditedCode(result.code);
+                    setViewMode('editor');
+                  }}
+                  onOpenDiff={() => {
+                    const previousItem = history.find(h => h.id !== currentHistoryId);
+                    if (previousItem) {
+                      setDiffTarget(previousItem);
+                      setViewMode('diff');
+                    }
+                  }}
+                  canUndo={undoStack.length > 0}
+                  canRedo={redoStack.length > 0}
+                  onUndo={handleUndo}
+                  onRedo={handleRedo}
+                  isPublished={isPublished}
+                  onTogglePublish={handleTogglePublish}
+                  onExplain={() => setShowExplanation(true)}
+                  onCodeReview={() => setShowCodeReview(true)}
+                  onA11yAudit={() => setShowA11yAudit(true)}
+                  onExport={() => setShowExportDialog(true)}
+                  onExportFormat={() => setShowExportFormat(true)}
+                  onShare={() => setShowShareDialog(true)}
+                  onQRCode={() => setShowQRCode(true)}
+                  onTemplates={() => setShowTemplateGallery(true)}
+                  onRemix={() => setShowRemixDialog(true)}
+                  onConsole={() => setShowConsole(prev => !prev)}
+                  showConsole={showConsole}
+                  hasConsoleErrors={consoleMessages.some(m => m.type === 'error')}
+                  explanation={result.explanation}
+                  sources={result.sources}
+                />
 
                 {/* Viewport */}
                 <div className="flex-1 overflow-hidden relative bg-zinc-100 dark:bg-[#0d0d10]">
