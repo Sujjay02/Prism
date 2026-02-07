@@ -3,6 +3,7 @@ import {
   X, Eye, Loader2, AlertTriangle, CheckCircle, Info,
   RefreshCw, Contrast, Type, MousePointer, Keyboard, Volume2
 } from 'lucide-react';
+import { auditAccessibility } from '../services/geminiService';
 
 interface A11yIssue {
   category: 'contrast' | 'aria' | 'keyboard' | 'semantic' | 'alt-text' | 'focus';
@@ -24,7 +25,6 @@ interface AccessibilityAuditProps {
   isOpen: boolean;
   onClose: () => void;
   code: string;
-  apiKey: string;
 }
 
 const categoryIcons: Record<A11yIssue['category'], React.ReactNode> = {
@@ -47,76 +47,20 @@ export const AccessibilityAudit: React.FC<AccessibilityAuditProps> = ({
   isOpen,
   onClose,
   code,
-  apiKey,
 }) => {
   const [isAuditing, setIsAuditing] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
   const [filter, setFilter] = useState<A11yIssue['severity'] | 'all'>('all');
 
   const runAudit = async () => {
-    if (!code.trim() || !apiKey) return;
+    if (!code.trim()) return;
 
     setIsAuditing(true);
     setResult(null);
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are an accessibility expert. Audit the following HTML/JSX code for WCAG 2.1 compliance and accessibility issues.
-
-Check for:
-- Color contrast issues
-- Missing ARIA attributes
-- Keyboard navigation problems
-- Semantic HTML issues
-- Missing alt text on images
-- Focus management issues
-
-Respond in this exact JSON format:
-{
-  "score": <0-100 accessibility score>,
-  "issues": [
-    {
-      "category": "contrast|aria|keyboard|semantic|alt-text|focus",
-      "severity": "critical|serious|moderate|minor",
-      "element": "<element selector or description>",
-      "message": "<description of the issue>",
-      "fix": "<how to fix it>",
-      "wcag": "<WCAG guideline reference like '1.4.3'>"
-    }
-  ],
-  "passed": ["<list of things done correctly>"],
-  "summary": "<brief summary of accessibility status>"
-}
-
-Code to audit:
-\`\`\`
-${code}
-\`\`\``
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 8192,
-            }
-          })
-        }
-      );
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        setResult(parsed);
-      }
+      const auditResult = await auditAccessibility(code);
+      setResult(auditResult as AuditResult);
     } catch (error) {
       console.error('Accessibility audit failed:', error);
       setResult({

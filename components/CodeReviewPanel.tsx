@@ -3,6 +3,7 @@ import {
   X, Sparkles, AlertTriangle, CheckCircle, Info, Loader2,
   Zap, Shield, Gauge, Code, RefreshCw, Copy, Check
 } from 'lucide-react';
+import { reviewCode } from '../services/geminiService';
 
 interface CodeIssue {
   type: 'error' | 'warning' | 'suggestion' | 'optimization';
@@ -23,7 +24,6 @@ interface CodeReviewPanelProps {
   onClose: () => void;
   code: string;
   onApplyOptimization?: (code: string) => void;
-  apiKey: string;
 }
 
 export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
@@ -31,7 +31,6 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
   onClose,
   code,
   onApplyOptimization,
-  apiKey,
 }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<ReviewResult | null>(null);
@@ -39,59 +38,14 @@ export const CodeReviewPanel: React.FC<CodeReviewPanelProps> = ({
   const [copied, setCopied] = useState(false);
 
   const analyzeCode = async () => {
-    if (!code.trim() || !apiKey) return;
+    if (!code.trim()) return;
 
     setIsAnalyzing(true);
     setResult(null);
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: `You are a senior code reviewer. Analyze the following code and provide:
-1. A quality score from 0-100
-2. A list of issues (errors, warnings, suggestions, optimizations)
-3. A brief summary
-4. An optimized version of the code
-
-Respond in this exact JSON format:
-{
-  "score": <number>,
-  "issues": [
-    {"type": "error|warning|suggestion|optimization", "line": <number or null>, "message": "<issue description>", "fix": "<suggested fix or null>"}
-  ],
-  "summary": "<brief summary>",
-  "optimizedCode": "<full optimized code>"
-}
-
-Code to review:
-\`\`\`
-${code}
-\`\`\``
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.2,
-              maxOutputTokens: 8192,
-            }
-          })
-        }
-      );
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-      // Extract JSON from response
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        setResult(parsed);
-      }
+      const reviewResult = await reviewCode(code);
+      setResult(reviewResult as ReviewResult);
     } catch (error) {
       console.error('Code review failed:', error);
       setResult({

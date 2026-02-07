@@ -940,7 +940,6 @@ Make sure to:
         isOpen={showCodeReview}
         onClose={() => setShowCodeReview(false)}
         code={currentCode}
-        apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
         onApplyOptimization={(optimizedCode) => {
           if (result) {
             setUndoStack(prev => [...prev, result].slice(-maxUndoSteps));
@@ -956,7 +955,6 @@ Make sure to:
         isOpen={showA11yAudit}
         onClose={() => setShowA11yAudit(false)}
         code={currentCode}
-        apiKey={import.meta.env.VITE_GEMINI_API_KEY || ''}
       />
 
       <ExportFormatDialog

@@ -664,6 +664,141 @@ Example format: ["Add dark mode toggle", "Implement form validation", "Add loadi
   }
 };
 
+/**
+ * AI Code Review using Gemini
+ */
+export const reviewCode = async (code: string): Promise<{
+  score: number;
+  issues: { type: string; line?: number; message: string; fix?: string }[];
+  summary: string;
+  optimizedCode?: string;
+}> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const reviewPrompt = `You are a senior code reviewer. Analyze the following code and provide:
+1. A quality score from 0-100
+2. A list of issues (errors, warnings, suggestions, optimizations)
+3. A brief summary
+4. An optimized version of the code
+
+Respond in this exact JSON format:
+{
+  "score": <number>,
+  "issues": [
+    {"type": "error|warning|suggestion|optimization", "line": <number or null>, "message": "<issue description>", "fix": "<suggested fix or null>"}
+  ],
+  "summary": "<brief summary>",
+  "optimizedCode": "<full optimized code>"
+}
+
+Code to review:
+\`\`\`
+${code}
+\`\`\``;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: { parts: [{ text: reviewPrompt }] },
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const responseText = response.text || '{}';
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('Code review error:', error);
+    return {
+      score: 0,
+      issues: [{ type: 'error', message: 'Failed to analyze code. Please try again.' }],
+      summary: 'Analysis failed',
+    };
+  }
+};
+
+/**
+ * Accessibility audit using Gemini
+ */
+export const auditAccessibility = async (code: string): Promise<{
+  score: number;
+  issues: { category: string; severity: string; element?: string; message: string; fix: string; wcag?: string }[];
+  passed: string[];
+  summary: string;
+}> => {
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  const auditPrompt = `You are an accessibility expert. Audit the following HTML/JSX code for WCAG 2.1 compliance and accessibility issues.
+
+Check for:
+- Color contrast issues
+- Missing ARIA attributes
+- Keyboard navigation problems
+- Semantic HTML issues
+- Missing alt text on images
+- Focus management issues
+
+Respond in this exact JSON format:
+{
+  "score": <0-100 accessibility score>,
+  "issues": [
+    {
+      "category": "contrast|aria|keyboard|semantic|alt-text|focus",
+      "severity": "critical|serious|moderate|minor",
+      "element": "<element selector or description>",
+      "message": "<description of the issue>",
+      "fix": "<how to fix it>",
+      "wcag": "<WCAG guideline reference like '1.4.3'>"
+    }
+  ],
+  "passed": ["<list of things done correctly>"],
+  "summary": "<brief summary of accessibility status>"
+}
+
+Code to audit:
+\`\`\`
+${code}
+\`\`\``;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: { parts: [{ text: auditPrompt }] },
+      config: {
+        temperature: 0.2,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json'
+      }
+    });
+
+    const responseText = response.text || '{}';
+    return JSON.parse(responseText);
+  } catch (error) {
+    console.error('Accessibility audit error:', error);
+    return {
+      score: 0,
+      issues: [{
+        category: 'semantic',
+        severity: 'critical',
+        message: 'Audit failed. Please try again.',
+        fix: 'Check your connection and try again.'
+      }],
+      passed: [],
+      summary: 'Audit failed',
+    };
+  }
+};
+
 export const transcribeAudio = async (audioBase64: string, mimeType: string): Promise<string> => {
   if (!process.env.API_KEY) {
     throw new Error("API Key is missing.");

@@ -1,5 +1,5 @@
-import React, { KeyboardEvent, useRef, useState, useEffect } from 'react';
-import { Send, Sparkles, Paperclip, X, Image as ImageIcon, FileText, Mic, MicOff, Loader2, Github, Figma, Upload, Link, ChevronDown } from 'lucide-react';
+import React, { KeyboardEvent, useRef, useState } from 'react';
+import { Send, X, FileText, Mic, Loader2, Github, Figma, Upload, Link } from 'lucide-react';
 import { InputAreaProps } from '../types';
 import { transcribeAudio } from '../services/geminiService';
 
@@ -17,22 +17,9 @@ export const InputArea: React.FC<InputAreaProps> = ({
   
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showUrlModal, setShowUrlModal] = useState<'github' | 'figma' | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
-  const attachMenuRef = useRef<HTMLDivElement>(null);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
-        setShowAttachMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !loading && !isRecording && !isTranscribing) {
@@ -215,111 +202,82 @@ export const InputArea: React.FC<InputAreaProps> = ({
 
   return (
     <div className="relative group">
-      {/* Attached Files Preview */}
-      {files.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-2 flex space-x-2 px-2">
-          {files.map((file, idx) => (
-            <div key={idx} className="relative group/image">
-              <div className="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden flex items-center justify-center shadow-sm" title={file.fileName}>
-                {file.mimeType.startsWith('image/') ? (
-                   <img src={`data:${file.mimeType};base64,${file.data}`} alt="preview" className="w-full h-full object-cover" />
-                ) : (
-                   <FileText className="w-6 h-6 text-zinc-400 dark:text-zinc-600" />
-                )}
-                <div className="absolute inset-0 bg-black/50 hidden group-hover/image:flex items-center justify-center">
-                   <X 
-                    className="w-4 h-4 text-white cursor-pointer" 
-                    onClick={() => removeFile(idx)}
-                   />
+      {/* Upload Toolbar - visible above the input */}
+      <div className="flex items-center gap-2 mb-2">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading || isRecording}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          title="Upload from Device"
+        >
+          <Upload className="w-4 h-4" />
+          <span>Upload</span>
+        </button>
+
+        <button
+          onClick={() => setShowUrlModal('github')}
+          disabled={loading || isRecording}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          title="Import from GitHub"
+        >
+          <Github className="w-4 h-4" />
+          <span>GitHub</span>
+        </button>
+
+        <button
+          onClick={() => setShowUrlModal('figma')}
+          disabled={loading || isRecording}
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          title="Import from Figma"
+        >
+          <Figma className="w-4 h-4" />
+          <span>Figma</span>
+        </button>
+
+        {/* Attached Files Preview */}
+        {files.length > 0 && (
+          <div className="flex items-center gap-2 ml-2">
+            {files.map((file, idx) => (
+              <div key={idx} className="relative group/image">
+                <div className="w-10 h-10 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden flex items-center justify-center shadow-sm" title={file.fileName}>
+                  {file.mimeType.startsWith('image/') ? (
+                     <img src={`data:${file.mimeType};base64,${file.data}`} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                     <FileText className="w-5 h-5 text-zinc-400 dark:text-zinc-600" />
+                  )}
+                  <div className="absolute inset-0 bg-black/50 hidden group-hover/image:flex items-center justify-center">
+                     <X
+                      className="w-4 h-4 text-white cursor-pointer"
+                      onClick={() => removeFile(idx)}
+                     />
+                  </div>
                 </div>
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full border border-white dark:border-zinc-900"></div>
               </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white dark:border-zinc-900"></div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-30 group-hover:opacity-60 transition duration-500 blur"></div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*,application/pdf,text/*"
+        multiple
+        onChange={handleFileChange}
+      />
+
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-30 group-hover:opacity-60 transition duration-500 blur" style={{ top: 'auto', height: 'calc(100% - 52px)' }}></div>
       <div className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl overflow-hidden transition-colors duration-300">
-        
-        {/* Attachment Button with Dropdown */}
-        <div className="relative" ref={attachMenuRef}>
-          <button
-            onClick={() => setShowAttachMenu(!showAttachMenu)}
-            className="pl-4 pr-2 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition-colors cursor-pointer flex items-center gap-0.5"
-            title="Attach Files"
-            disabled={loading || isRecording}
-          >
-            <Paperclip className="w-5 h-5" />
-            <ChevronDown className="w-3 h-3" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {showAttachMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-56 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="p-1">
-                <button
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                    setShowAttachMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                >
-                  <Upload className="w-4 h-4 text-blue-500" />
-                  <div>
-                    <div className="font-medium">Upload from Device</div>
-                    <div className="text-xs text-zinc-500">Images, PDFs, text files</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowUrlModal('github');
-                    setShowAttachMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                >
-                  <Github className="w-4 h-4" />
-                  <div>
-                    <div className="font-medium">Import from GitHub</div>
-                    <div className="text-xs text-zinc-500">Paste a file or gist URL</div>
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setShowUrlModal('figma');
-                    setShowAttachMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                >
-                  <Figma className="w-4 h-4 text-purple-500" />
-                  <div>
-                    <div className="font-medium">Import from Figma</div>
-                    <div className="text-xs text-zinc-500">Paste a design URL</div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          accept="image/*,application/pdf,text/*"
-          multiple
-          onChange={handleFileChange}
-        />
 
         {/* Microphone Button */}
-        <button 
+        <button
           onClick={handleMicClick}
           disabled={loading || isTranscribing}
-          className={`px-2 transition-colors cursor-pointer flex items-center justify-center ${
-            isRecording 
-              ? 'text-red-500 hover:text-red-600 animate-pulse' 
+          className={`pl-4 pr-2 transition-colors cursor-pointer flex items-center justify-center ${
+            isRecording
+              ? 'text-red-500 hover:text-red-600 animate-pulse'
               : 'text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300'
           }`}
           title={isRecording ? "Stop Recording" : "Record Audio"}
@@ -342,7 +300,7 @@ export const InputArea: React.FC<InputAreaProps> = ({
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            isRecording ? "Listening..." : 
+            isRecording ? "Listening..." :
             isTranscribing ? "Transcribing..." :
             files.length > 0 ? "Describe what to do with these files..." : "Describe the UI you want to build..."
           }

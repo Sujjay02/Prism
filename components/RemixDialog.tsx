@@ -121,7 +121,7 @@ export const RemixDialog: React.FC<RemixDialogProps> = ({
                       {/* Preview thumbnail */}
                       <div className="aspect-video bg-zinc-100 dark:bg-zinc-800 relative overflow-hidden">
                         <iframe
-                          srcDoc={item.result.html}
+                          srcDoc={item.result.code}
                           className="w-full h-full scale-[0.25] origin-top-left pointer-events-none"
                           style={{ width: '400%', height: '400%' }}
                           sandbox="allow-scripts"
@@ -292,7 +292,7 @@ export const RemixDialog: React.FC<RemixDialogProps> = ({
               </button>
             </div>
             <iframe
-              srcDoc={previewItem.result.html}
+              srcDoc={previewItem.result.code}
               className="flex-1 w-full bg-white"
               sandbox="allow-scripts"
             />
