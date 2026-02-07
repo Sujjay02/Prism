@@ -107,12 +107,12 @@ export const HistorySidebar: React.FC<ExtendedHistorySidebarProps> = ({
         item.prompt.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.result.explanation.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.appSettings?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.appSettings?.tags?.some(tag => tag.includes(searchTerm.toLowerCase()));
+        item.appSettings?.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesMode = viewMode === 'history' ? true : item.isPublished;
 
       const matchesCategory = viewMode === 'apps' && selectedCategory !== 'all'
-        ? item.appSettings?.category === selectedCategory
+        ? (item.appSettings?.category || 'other') === selectedCategory
         : true;
 
       return matchesSearch && matchesMode && matchesCategory;
@@ -323,7 +323,7 @@ export const HistorySidebar: React.FC<ExtendedHistorySidebarProps> = ({
               >
                 All
               </button>
-              {(Object.keys(CATEGORY_ICONS) as AppCategory[]).slice(0, 5).map((cat) => (
+              {(Object.keys(CATEGORY_ICONS) as AppCategory[]).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
