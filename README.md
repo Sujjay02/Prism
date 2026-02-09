@@ -77,7 +77,7 @@ Prism is an **AI-powered universal code generator** that transforms natural lang
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    GEMINI 2.0 FLASH                             │
+│                    GEMINI 3.0 FLASH/PRO                             │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
 │   │   Vision    │  │   Reasoning │  │   Search    │            │
 │   │   Analysis  │  │   & Logic   │  │  Grounding  │            │
